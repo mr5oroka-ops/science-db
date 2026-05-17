@@ -30,14 +30,19 @@ app.add_middleware(
 
 # ── Подключение к БД ──────────────────────────────────────────
 def get_db():
-    conn = psycopg2.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        port=os.getenv("DB_PORT", "5432"),
-        dbname=os.getenv("DB_NAME", "science_db"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", ""),
-        cursor_factory=psycopg2.extras.RealDictCursor
-    )
+    import urllib.parse
+    database_url = os.getenv("DATABASE_URL") or os.getenv("DB_URL")
+    if database_url:
+        conn = psycopg2.connect(database_url, cursor_factory=psycopg2.extras.RealDictCursor)
+    else:
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            dbname=os.getenv("DB_NAME", "science_db"),
+            user=os.getenv("DB_USER", "postgres"),
+            password=os.getenv("DB_PASSWORD", ""),
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
     try:
         yield conn
     finally:
