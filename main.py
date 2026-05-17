@@ -195,11 +195,6 @@ def build_search_query(
 
 # ── Роуты ─────────────────────────────────────────────────────
 
-@app.get("/")
-def root():
-    return {"status": "ok", "message": "Агрегатор научной информации API v1.0"}
-
-
 @app.get("/api/articles", response_model=List[dict])
 def search_articles(
     search: Optional[str] = Query(None, description="Полнотекстовый поиск"),
