@@ -371,3 +371,10 @@ def top_authors(db=Depends(get_db)):
         cur.execute(sql)
         rows = cur.fetchall()
     return [dict(r) for r in rows]
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+def serve_frontend():
+    with open("index.html", encoding="utf-8") as f:
+        return f.read()
