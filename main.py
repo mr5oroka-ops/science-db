@@ -375,6 +375,6 @@ def top_authors(db=Depends(get_db)):
 from fastapi.responses import HTMLResponse
 
 @app.get("/", response_class=HTMLResponse)
-def serve_frontend():
+def root():
     with open("index.html", encoding="utf-8") as f:
         return f.read()
