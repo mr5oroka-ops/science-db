@@ -655,7 +655,7 @@ function renderCard(a) {
   const badges = [
     a.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
     a.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
-    a.is_open_access ? '<span class="badge badge-open">⬡ Open Access</span>' : '',
+    a.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
     a.has_formulas   ? '<span class="badge badge-formula">∑ Формулы</span>' : '',
     quartileBadge(a.quartile),
     a.language  ? `<span class="badge badge-lang">${a.language.toUpperCase()}</span>` : '',
@@ -767,7 +767,7 @@ async function openModal(id) {
   const badges = [
     article.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
     article.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
-    article.is_open_access ? '<span class="badge badge-open">⬡ Open Access</span>' : '',
+    article.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
     article.has_formulas   ? '<span class="badge badge-formula">∑ Формулы LaTeX</span>' : '',
     quartileBadge(article.quartile),
   ].filter(Boolean).join('');
