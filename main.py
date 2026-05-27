@@ -100,6 +100,7 @@ def build_search_query(
     min_author_rating: Optional[float],
     org_id: Optional[int],
     country_id: Optional[int],
+    author: Optional[str],
 ):
     """Собирает SQL-запрос с динамическими фильтрами."""
     conditions = []
@@ -178,6 +179,10 @@ def build_search_query(
     if country_id:
         conditions.append("auth.country_id = %s"); params.append(country_id)
 
+    # Фильтр по автору
+    if author:
+        conditions.append("auth.full_name ILIKE %s"); params.append(f"%{author}%")
+
     where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
     full_sql = f"""
@@ -188,7 +193,7 @@ def build_search_query(
                  a.doi, a.file_url, a.file_format, a.language,
                  a.has_formulas, a.is_open_access
         ORDER BY a.year DESC NULLS LAST
-        LIMIT 100
+        LIMIT 500
     """
     return full_sql, params
 
@@ -212,12 +217,13 @@ def search_articles(
     min_author_rating: Optional[float] = Query(None, description="Мин. рейтинг автора (0-5)"),
     org_id: Optional[int] = Query(None, description="ID организации"),
     country_id: Optional[int] = Query(None, description="ID страны"),
+    author: Optional[str] = Query(None, description="Поиск по автору"),
     db=Depends(get_db),
 ):
     sql, params = build_search_query(
         search, keyword, area_id, year_from, year_to,
         is_vak, is_scopus, quartile, language, file_format,
-        has_formulas, is_open_access, min_author_rating, org_id, country_id
+        has_formulas, is_open_access, min_author_rating, org_id, country_id, author
     )
     with db.cursor() as cur:
         cur.execute(sql, params)
