@@ -15,20 +15,24 @@ from unidecode import unidecode
 load_dotenv()
 
 # ── Настройки подключения к БД ──────────────────────────────────
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_PORT = os.getenv('DB_PORT', '5432')
-DB_NAME = os.getenv('DB_NAME', 'science_db')
-DB_USER = os.getenv('DB_USER', 'postgres')
-DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if DATABASE_URL:
+    conn_str = DATABASE_URL
+else:
+    DB_HOST = os.getenv('DB_HOST', 'localhost')
+    DB_PORT = os.getenv('DB_PORT', '5432')
+    DB_NAME = os.getenv('DB_NAME', 'science_db')
+    DB_USER = os.getenv('DB_USER', 'postgres')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+    conn_str = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # ── Папка с PDF ───────────────────────────────────────────────
 BASE_DIR = os.path.join(os.path.dirname(__file__), 'library')
 
 # ── Подключение ───────────────────────────────────────────────
 try:
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    conn = psycopg2.connect(conn_str, cursor_factory=psycopg2.extras.RealDictCursor)
     cur = conn.cursor()
     print("✅ Подключение к БД успешно")
 except Exception as e:
@@ -262,6 +266,30 @@ for folder_name in sorted(os.listdir(BASE_DIR)):
         if not text:
             print(f"   ❌ Не удалось извлечь текст: {pdf_file[:40]}...")
             errors += 1
+            continue
+
+        # Проверка на кракозябры
+        def is_corrupted_text(text):
+            if not text:
+                return True
+            # Проверяем на наличие специфических кракозябр
+            corrupted_patterns = [
+                r'[^\w\sА-Яа-яЁё0-9\.,;:\-\(\)]{4,}',  # 4+ спецсимволов подряд
+                r'[А-Яа-яЁё]{1,2}[^А-Яа-яЁё\s\w]{3,}',  # 1-2 кириллических символа + 3+ спецсимволов
+                r'[^А-Яа-яЁё\s]{10,}',  # 10+ не-кириллических символов подряд
+            ]
+            for pattern in corrupted_patterns:
+                if re.search(pattern, text):
+                    return True
+            # Проверяем на отсутствие нормальных слов
+            words = re.findall(r'[А-Яа-яЁёA-Za-z]{3,}', text)
+            if len(words) < 2 and len(text) > 10:
+                return True
+            return False
+
+        if is_corrupted_text(text):
+            print(f"   ⏭  Пропущен (кракозябры): {pdf_file[:40]}...")
+            skipped += 1
             continue
 
         title, authors_raw, author_list, doi = parse_metadata(text, year)
