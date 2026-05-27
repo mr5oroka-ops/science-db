@@ -491,6 +491,13 @@
     <hr class="divider">
 
     <div class="filter-group">
+      <h4>Автор</h4>
+      <input type="text" id="f-author" placeholder="например: Иванов И.И.">
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
       <h4>Язык публикации</h4>
       <select id="f-lang">
         <option value="">Любой</option>
@@ -714,6 +721,7 @@ async function applyFilters() {
   const params = {
     search:          document.getElementById('main-search').value.trim(),
     keyword:         document.getElementById('f-keyword').value.trim(),
+    author:          document.getElementById('f-author').value.trim(),
     is_vak:          document.getElementById('f-vak').checked || '',
     is_scopus:       document.getElementById('f-scopus').checked || '',
     is_open_access:  document.getElementById('f-open').checked || '',
@@ -742,6 +750,7 @@ async function applyFilters() {
 function resetFilters() {
   document.getElementById('main-search').value = '';
   document.getElementById('f-keyword').value = '';
+  document.getElementById('f-author').value = '';
   ['f-vak','f-scopus','f-open','f-formulas'].forEach(id => document.getElementById(id).checked = false);
   ['f-quartile','f-lang','f-format','f-rating'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-year-from').value = '';

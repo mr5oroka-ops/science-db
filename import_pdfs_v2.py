@@ -52,13 +52,37 @@ conn.commit()
 
 # ── Функция извлечения текста с первых страниц ───────────────
 def extract_first_pages(pdf_path, max_pages=2):
-    """Извлекает текст с первых страниц PDF"""
+    """Извлекает текст с первых страниц PDF с правильной кодировкой"""
     try:
         doc = fitz.open(pdf_path)
         text = ""
         for page_num in range(min(max_pages, len(doc))):
-            text += doc[page_num].get_text()
+            # Используем разные методы извлечения текста для лучшей совместимости
+            page = doc[page_num]
+            # Пробуем сначала обычный метод
+            page_text = page.get_text()
+            # Если текст слишком короткий или содержит много спецсимволов, пробуем другой метод
+            if len(page_text) < 100 or len([c for c in page_text if ord(c) > 127]) > len(page_text) * 0.3:
+                page_text = page.get_text("text")  # Простой текст
+            text += page_text
         doc.close()
+        
+        # Пытаемся исправить кодировку если нужно
+        try:
+            # Если есть проблемы с кодировкой, пробуем декодировать
+            if text and len([c for c in text if ord(c) > 127]) > len(text) * 0.5:
+                # Пробуем разные кодировки
+                for encoding in ['utf-8', 'cp1251', 'latin-1']:
+                    try:
+                        decoded = text.encode('latin-1').decode(encoding)
+                        if len([c for c in decoded if ord(c) > 127]) < len(decoded) * 0.3:
+                            text = decoded
+                            break
+                    except:
+                        continue
+        except:
+            pass
+            
         return text.strip()
     except Exception as e:
         print(f"  Ошибка чтения {pdf_path}: {e}")
