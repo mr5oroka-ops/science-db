@@ -4,6 +4,8 @@ psycopg2-binary
 python-dotenv
 anthropic
 openai
+google-generativeai
+requests
 pymupdf
 unidecode
 pdfplumber
