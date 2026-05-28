@@ -122,12 +122,63 @@ def extract_journal_name(text):
     
     return "Кафедральные публикации"
 
+# ── Функция извлечения ключевых слов ─────────────────────────
+def extract_keywords(text):
+    """Извлекает ключевые слова из текста"""
+    keywords = []
+    
+    # Ищем секцию с ключевыми словами
+    keywords_section = re.search(r'(Ключевые слова|Keywords|Ключевые слова:|Keywords:)\s*[:\.]?\s*(.*?)(?=\n\n|\n[A-ZА-ЯЁ]|\nВведение|\nAbstract|\nВведение|$)', text, re.IGNORECASE | re.DOTALL)
+    
+    if keywords_section:
+        keywords_text = keywords_section.group(2)
+        # Разделяем по запятым, точкам с запятой и т.д.
+        keywords = re.split(r'[,;·•]\s*', keywords_text)
+        keywords = [k.strip() for k in keywords if len(k.strip()) > 2]
+    else:
+        # Если не нашли секцию, пробуем найти слова в тексте
+        # Ищем слова, которые часто встречаются и выглядят как термины
+        words = re.findall(r'\b[А-Яа-яA-Za-z]{4,}\b', text)
+        from collections import Counter
+        word_counts = Counter(words)
+        # Берем 5 самых частых слов (исключая стоп-слова)
+        stop_words = {'и', 'в', 'на', 'с', 'для', 'по', 'из', 'к', 'от', 'that', 'this', 'with', 'from', 'for', 'the', 'and'}
+        keywords = [w for w, c in word_counts.most_common(10) if w.lower() not in stop_words and c > 1][:5]
+    
+    return keywords[:10]  # Не более 10 ключевых слов
+
+# ── Функция извлечения предметных областей ───────────────────
+def extract_areas(text):
+    """Извлекает предметные области из текста"""
+    areas = []
+    
+    # Список предметных областей для поиска
+    area_keywords = [
+        'информатика', 'базы данных', 'системы управления', 'программирование',
+        'информационная безопасность', 'криптография', 'защита информации',
+        'машинное обучение', 'нейронные сети', 'искусственный интеллект',
+        'математика', 'статистика', 'вероятность',
+        'физика', 'квантовая физика', 'механика',
+        'кибербезопасность', 'сетевая безопасность', 'антивирус',
+        'алгоритмы', 'структуры данных', 'компьютерные сети',
+        'программная инженерия', 'разработка ПО', 'тестирование',
+        'большой данные', 'big data', 'аналитика данных'
+    ]
+    
+    text_lower = text.lower()
+    for area in area_keywords:
+        if area in text_lower:
+            areas.append(area.capitalize())
+    
+    return areas[:5]  # Не более 5 областей
+
 # ── Функция парсинга заголовка и авторов ──────────────────────
 def parse_metadata(text, year):
-    """Парсит заголовок, авторов и DOI из текста"""
+    """Парсит заголовок, авторов, описание и DOI из текста"""
     lines = [l.strip() for l in text.split('\n') if l.strip()]
     
     title = ""
+    abstract = ""
     authors_raw = ""
     doi = ""
     
@@ -145,25 +196,47 @@ def parse_metadata(text, year):
     
     # Извлекаем заголовок
     if udk_idx >= 0 and udk_idx + 1 < len(lines):
-        # Заголовок идёт после УДК
-        title_lines = []
-        for line in lines[udk_idx + 1:udk_idx + 6]:
+        # Собираем все строки после УДК до авторов или ключевых слов
+        all_lines = []
+        for line in lines[udk_idx + 1:udk_idx + 15]:
             # Пропускаем строки с авторами (инициалы)
             if re.match(r'^[А-ЯЁ]\.?[А-ЯЁ]\.?\s+[А-ЯЁ][а-яё]+', line):
-                continue
+                break
             # Пропускаем очень короткие строки
-            if len(line) < 10:
+            if len(line) < 5:
                 continue
-            # Если строка похожа на продолжение заголовка
-            if re.search(r'[А-Яа-я]', line) and not re.match(r'^(DOI|УДК|UDC|Ключевые|Введение|Abstract|Keywords)', line, re.IGNORECASE):
-                title_lines.append(line)
-            else:
-                # Если встретили ключевое слово или начало аннотации - останавливаемся
-                if re.match(r'^(Ключевые|Введение|Abstract|Keywords|Аннотация)', line, re.IGNORECASE):
-                    break
+            # Если встретили ключевое слово - останавливаемся
+            if re.match(r'^(Ключевые|Введение|Abstract|Keywords|Аннотация|DOI|УДК|UDC)', line, re.IGNORECASE):
+                break
+            all_lines.append(line)
         
-        if title_lines:
-            title = ' '.join(title_lines)
+        # Объединяем все строки в один текст
+        full_text = ' '.join(all_lines)
+        
+        # Разделяем на название и описание
+        # Паттерны для начала описания
+        abstract_patterns = [
+            r'(Целью работы|В статье|В работе|Статья посвящена|Работа посвящена|В данной статье|В статье рассматривается|В работе рассматривается|Современные системы|В данной работе|В статье рассматриваются|В работе рассматриваются|В статье анализируется|В работе анализируется|В данной статье рассматривается|В данной работе рассматривается)',
+        ]
+        
+        abstract_start_idx = -1
+        for pattern in abstract_patterns:
+            match = re.search(pattern, full_text, re.IGNORECASE)
+            if match:
+                abstract_start_idx = match.start()
+                break
+        
+        if abstract_start_idx > 0:
+            # Разделяем название и описание
+            title = full_text[:abstract_start_idx].strip()
+            abstract = full_text[abstract_start_idx:].strip()
+            
+            # Очищаем название от лишних знаков препинания в конце
+            title = re.sub(r'[.,:;]+$', '', title).strip()
+        else:
+            # Если не нашли паттерн описания - весь текст это название
+            title = full_text.strip()
+            abstract = ""
     
     # Если заголовок не найден после УДК, ищем самую длинную строку
     if not title:
@@ -225,7 +298,16 @@ def parse_metadata(text, year):
     if not title:
         title = "Без названия"
     
-    return title, authors_raw, found_authors, doi
+    # Чистим описание
+    abstract = clean_text(abstract)
+    if len(abstract) > 2000:
+        abstract = abstract[:1997] + '...'
+    
+    # Извлекаем ключевые слова и предметные области
+    keywords = extract_keywords(text)
+    areas = extract_areas(text)
+    
+    return title, authors_raw, found_authors, doi, abstract, keywords, areas
 
 # ── Основной цикл по папкам ───────────────────────────────────
 total = 0
@@ -268,31 +350,26 @@ for folder_name in sorted(os.listdir(BASE_DIR)):
             errors += 1
             continue
 
-        # Проверка на кракозябры
-        def is_corrupted_text(text):
-            if not text:
-                return True
-            # Проверяем на наличие специфических кракозябр
-            corrupted_patterns = [
-                r'[^\w\sА-Яа-яЁё0-9\.,;:\-\(\)]{4,}',  # 4+ спецсимволов подряд
-                r'[А-Яа-яЁё]{1,2}[^А-Яа-яЁё\s\w]{3,}',  # 1-2 кириллических символа + 3+ спецсимволов
-                r'[^А-Яа-яЁё\s]{10,}',  # 10+ не-кириллических символов подряд
-            ]
-            for pattern in corrupted_patterns:
-                if re.search(pattern, text):
-                    return True
-            # Проверяем на отсутствие нормальных слов
-            words = re.findall(r'[А-Яа-яЁёA-Za-z]{3,}', text)
-            if len(words) < 2 and len(text) > 10:
-                return True
-            return False
+        title, authors_raw, author_list, doi, abstract, keywords, areas = parse_metadata(text, year)
 
-        if is_corrupted_text(text):
-            print(f"   ⏭  Пропущен (кракозябры): {pdf_file[:40]}...")
-            skipped += 1
+        # Проверяем DOI на кракозябры (пропускаем проблемные выпуски)
+        corrupted_doi_patterns = [
+            r'10\.36622/VSTU\.2022\.25\.4\.',  # 2022, выпуск 4
+            r'10\.36622/VSTU\.2023\.26\.',     # 2023, выпуск 1-3
+            r'10\.36622/VSTU\.2023\.4\.26\.',  # 2023, выпуск 4
+        ]
+        skip_article = False
+        if doi:
+            for pattern in corrupted_doi_patterns:
+                if re.search(pattern, doi):
+                    print(f"   ⏭  Пропущен (кракозябры): {pdf_file[:40]}...")
+                    print(f"     DOI: {doi}")
+                    skipped += 1
+                    skip_article = True
+                    break
+        
+        if skip_article:
             continue
-
-        title, authors_raw, author_list, doi = parse_metadata(text, year)
 
         print(f"   ✓ {pdf_file[:40]}...")
         print(f"     Заголовок: {title[:60]}...")
@@ -304,10 +381,10 @@ for folder_name in sorted(os.listdir(BASE_DIR)):
             # Вставляем статью
             cur.execute("""
                 INSERT INTO articles
-                    (title, year, journal_id, file_url, file_format, language, is_open_access, doi)
-                VALUES (%s, %s, %s, %s, 'pdf', 'ru', TRUE, %s)
+                    (title, abstract, year, journal_id, file_url, file_format, language, is_open_access, doi)
+                VALUES (%s, %s, %s, %s, %s, 'pdf', 'ru', TRUE, %s)
                 RETURNING id
-            """, (title, year, journal_id, pdf_file, doi))
+            """, (title, abstract, year, journal_id, pdf_file, doi))
             article_id = cur.fetchone()['id']
 
             # Вставляем авторов
@@ -332,6 +409,50 @@ for folder_name in sorted(os.listdir(BASE_DIR)):
                     VALUES (%s, %s, %s)
                     ON CONFLICT DO NOTHING
                 """, (article_id, author_id, idx + 1))
+
+            # Вставляем ключевые слова
+            for keyword in keywords:
+                # Ищем или создаём ключевое слово
+                cur.execute(
+                    "SELECT id FROM keywords WHERE word = %s", (keyword,)
+                )
+                keyword_row = cur.fetchone()
+                if keyword_row:
+                    keyword_id = keyword_row['id']
+                else:
+                    cur.execute(
+                        "INSERT INTO keywords (word) VALUES (%s) RETURNING id",
+                        (keyword,)
+                    )
+                    keyword_id = cur.fetchone()['id']
+
+                cur.execute("""
+                    INSERT INTO article_keywords (article_id, keyword_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (article_id, keyword_id))
+
+            # Вставляем предметные области
+            for area in areas:
+                # Ищем или создаём предметную область
+                cur.execute(
+                    "SELECT id FROM subject_areas WHERE name = %s", (area,)
+                )
+                area_row = cur.fetchone()
+                if area_row:
+                    area_id = area_row['id']
+                else:
+                    cur.execute(
+                        "INSERT INTO subject_areas (name) VALUES (%s) RETURNING id",
+                        (area,)
+                    )
+                    area_id = cur.fetchone()['id']
+
+                cur.execute("""
+                    INSERT INTO article_areas (article_id, area_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (article_id, area_id))
 
             conn.commit()
             total += 1

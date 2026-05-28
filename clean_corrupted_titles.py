@@ -42,14 +42,6 @@ def is_corrupted_text(text):
     if not text:
         return True
     
-    # Считаем количество символов с кодом > 127 (не ASCII)
-    non_ascii = sum(1 for c in text if ord(c) > 127)
-    total = len(text)
-    
-    # Если более 50% символов не ASCII и текст короткий - считаем поврежденным
-    if total > 0 and non_ascii / total > 0.5 and total < 50:
-        return True
-    
     # Проверяем на наличие специфических кракозябр - более агрессивные паттерны
     corrupted_patterns = [
         r'[ɂɇФɈȺЦȻЕɁɉ]+',  # специфические кракозябры из elibrary
@@ -65,11 +57,6 @@ def is_corrupted_text(text):
     for pattern in corrupted_patterns:
         if re.search(pattern, text):
             return True
-    
-    # Проверяем на отсутствие нормальных слов (менее 3 последовательных букв)
-    words = re.findall(r'[А-Яа-яЁёA-Za-z]{3,}', text)
-    if len(words) < 2 and total > 10:  # если меньше 2 нормальных слов и текст не короткий
-        return True
     
     return False
 

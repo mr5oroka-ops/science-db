@@ -3,6 +3,7 @@ uvicorn
 psycopg2-binary
 python-dotenv
 anthropic
+openai
 pymupdf
 unidecode
 pdfplumber

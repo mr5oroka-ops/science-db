@@ -236,7 +236,7 @@ def get_article(article_id: int, db=Depends(get_db)):
     sql = """
         SELECT a.*, j.name AS journal_name, j.is_vak, j.is_scopus,
                j.quartile, j.impact_factor,
-               STRING_AGG(DISTINCT auth.full_name || ' (' || COALESCE(auth.degree,'') || ')', '; ') AS authors,
+               STRING_AGG(DISTINCT auth.full_name, '; ') AS authors,
                STRING_AGG(DISTINCT k.word, ', ') AS keywords,
                STRING_AGG(DISTINCT sa.name, ', ') AS areas
         FROM articles a
@@ -278,29 +278,72 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
     if not article or not article["abstract"]:
         raise HTTPException(status_code=404, detail="Нет аннотации для пересказа")
 
-    import anthropic
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    # Пробуем сначала OpenAI GPT-4, если есть ключ
+    if os.getenv("OPENAI_API_KEY"):
+        try:
+            import openai
+            client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    lang_prompt = "на русском языке" if language == "ru" else "in English"
-    prompt = (
-        f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
-        f"следующей научной статьи. Название: «{article['title']}». "
-        f"Аннотация: {article['abstract']}"
-    )
+            lang_prompt = "на русском языке" if language == "ru" else "in English"
+            prompt = (
+                f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
+                f"следующей научной статьи. Название: «{article['title']}». "
+                f"Аннотация: {article['abstract']}"
+            )
 
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=400,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    summary_text = message.content[0].text
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=400
+            )
+            summary_text = response.choices[0].message.content
+            model_name = "gpt-4"
+        except Exception as e:
+            print(f"OpenAI GPT-4 error: {e}, falling back to Anthropic Claude")
+            # Fallback to Anthropic Claude
+            import anthropic
+            client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+            lang_prompt = "на русском языке" if language == "ru" else "in English"
+            prompt = (
+                f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
+                f"следующей научной статьи. Название: «{article['title']}». "
+                f"Аннотация: {article['abstract']}"
+            )
+
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=400,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            summary_text = message.content[0].text
+            model_name = "claude-sonnet-4-20250514"
+    else:
+        # Используем только Anthropic Claude
+        import anthropic
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+        lang_prompt = "на русском языке" if language == "ru" else "in English"
+        prompt = (
+            f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
+            f"следующей научной статьи. Название: «{article['title']}». "
+            f"Аннотация: {article['abstract']}"
+        )
+
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        summary_text = message.content[0].text
+        model_name = "claude-sonnet-4-20250514"
 
     # 3. Сохраняем в БД
     with db.cursor() as cur:
         cur.execute(
             """INSERT INTO summaries (article_id, language, model_name, summary_text)
                VALUES (%s, %s, %s, %s) RETURNING *""",
-            (article_id, language, "claude-sonnet-4-20250514", summary_text)
+            (article_id, language, model_name, summary_text)
         )
         saved = cur.fetchone()
         db.commit()
