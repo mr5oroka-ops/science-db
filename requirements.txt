@@ -5,7 +5,6 @@ python-dotenv
 anthropic
 openai
 google-generativeai
-requests
 pymupdf
 unidecode
 pdfplumber

@@ -278,10 +278,7 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
     if not article or not article["abstract"]:
         raise HTTPException(status_code=404, detail="Нет аннотации для пересказа")
 
-    summary_text = ""
-    model_name = ""
-
-    # Пробуем сначала Google Gemini (бесплатный)
+    # Используем Google Gemini
     if os.getenv("GEMINI_API_KEY"):
         try:
             import google.generativeai as genai
@@ -299,56 +296,8 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
             summary_text = response.text
             model_name = "gemini-pro"
         except Exception as e:
-            print(f"Google Gemini error: {e}")
-
-    # Если Gemini не сработал, пробуем Hugging Face (бесплатный)
-    if not summary_text:
-        try:
-            import requests
-            HF_API_URL = "https://api-inference.huggingface.co/models/facebook/bart-large-cnn"
-            headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_TOKEN', '')}"}
-
-            lang_prompt = "Summarize in Russian" if language == "ru" else "Summarize in English"
-            payload = {
-                "inputs": f"{lang_prompt}: {article['title']}. {article['abstract']}",
-                "parameters": {"max_length": 150, "min_length": 50}
-            }
-
-            response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=30)
-            if response.status_code == 200:
-                result = response.json()
-                if isinstance(result, list) and len(result) > 0:
-                    summary_text = result[0].get("summary_text", "")
-                    model_name = "facebook/bart-large-cnn"
-        except Exception as e:
-            print(f"Hugging Face error: {e}")
-
-    # Если Hugging Face не сработал, пробуем OpenAI GPT-4
-    if not summary_text and os.getenv("OPENAI_API_KEY"):
-        try:
-            import openai
-            client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-            lang_prompt = "на русском языке" if language == "ru" else "in English"
-            prompt = (
-                f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
-                f"следующей научной статьи. Название: «{article['title']}». "
-                f"Аннотация: {article['abstract']}"
-            )
-
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=400
-            )
-            summary_text = response.choices[0].message.content
-            model_name = "gpt-4"
-        except Exception as e:
-            print(f"OpenAI GPT-4 error: {e}")
-
-    # Если OpenAI не сработал, пробуем Anthropic Claude
-    if not summary_text and os.getenv("ANTHROPIC_API_KEY"):
-        try:
+            print(f"Gemini error: {e}, falling back to Anthropic Claude")
+            # Fallback to Anthropic Claude
             import anthropic
             client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
@@ -366,13 +315,25 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
             )
             summary_text = message.content[0].text
             model_name = "claude-sonnet-4-20250514"
-        except Exception as e:
-            print(f"Anthropic Claude error: {e}")
+    else:
+        # Используем только Anthropic Claude
+        import anthropic
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-    # Если ничего не сработало, возвращаем демо-пересказ
-    if not summary_text:
-        summary_text = "Статья посвящена анализу современных подходов в исследуемой области. Авторы предлагают оригинальный метод, демонстрирующий улучшение ключевых показателей по сравнению с существующими решениями. Результаты подтверждены экспериментально на реальных наборах данных."
-        model_name = "demo"
+        lang_prompt = "на русском языке" if language == "ru" else "in English"
+        prompt = (
+            f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
+            f"следующей научной статьи. Название: «{article['title']}». "
+            f"Аннотация: {article['abstract']}"
+        )
+
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        summary_text = message.content[0].text
+        model_name = "claude-sonnet-4-20250514"
 
     # 3. Сохраняем в БД
     with db.cursor() as cur:
@@ -453,9 +414,6 @@ def top_authors(db=Depends(get_db)):
     return [dict(r) for r in rows]
 
 from fastapi.responses import HTMLResponse
-
-# Статическая раздача PDF файлов
-app.mount("/library", StaticFiles(directory="library"), name="library")
 
 @app.get("/", response_class=HTMLResponse)
 def root():

@@ -824,16 +824,16 @@ async function openModal(id) {
       </div>
     </div>
 
-    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+    ${article.doi ? `
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <a href="https://doi.org/${article.doi}" target="_blank" class="btn-sm primary" style="display:inline-block;text-decoration:none">
+        Открыть по DOI →
+      </a>
       ${article.file_url ? `
-      <a href="/library/${article.file_url}" target="_blank" class="btn-sm primary" style="display:inline-block;text-decoration:none">
+      <a href="${article.file_url}" target="_blank" class="btn-sm" style="display:inline-block;text-decoration:none">
         Скачать PDF
       </a>` : ''}
-      ${article.doi ? `
-      <a href="https://doi.org/${article.doi}" target="_blank" class="btn-sm" style="display:inline-block;text-decoration:none">
-        Открыть по DOI →
-      </a>` : ''}
-    </div>
+    </div>` : ''}
   `;
 
   document.getElementById('modal').classList.add('open');
