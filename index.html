@@ -830,7 +830,7 @@ async function openModal(id) {
         Открыть по DOI →
       </a>
       ${article.file_url ? `
-      <a href="${article.file_url}" target="_blank" class="btn-sm" style="display:inline-block;text-decoration:none">
+      <a href="/library/${article.file_url}" target="_blank" class="btn-sm" style="display:inline-block;text-decoration:none">
         Скачать PDF
       </a>` : ''}
     </div>` : ''}

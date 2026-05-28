@@ -234,8 +234,8 @@ def search_articles(
 @app.get("/api/articles/{article_id}")
 def get_article(article_id: int, db=Depends(get_db)):
     sql = """
-        SELECT a.*, j.name AS journal_name, j.is_vak, j.is_scopus,
-               j.quartile, j.impact_factor,
+        SELECT a.id, a.title, a.abstract, a.year, a.doi, a.file_url, a.file_format, a.language, a.has_formulas, a.is_open_access,
+               j.name AS journal_name, j.is_vak, j.is_scopus, j.quartile, j.impact_factor,
                STRING_AGG(DISTINCT auth.full_name, '; ') AS authors,
                STRING_AGG(DISTINCT k.word, ', ') AS keywords,
                STRING_AGG(DISTINCT sa.name, ', ') AS areas
@@ -248,7 +248,8 @@ def get_article(article_id: int, db=Depends(get_db)):
         LEFT JOIN article_areas ar    ON a.id           = ar.article_id
         LEFT JOIN subject_areas sa    ON ar.area_id     = sa.id
         WHERE a.id = %s
-        GROUP BY a.id, j.name, j.is_vak, j.is_scopus, j.quartile, j.impact_factor
+        GROUP BY a.id, a.title, a.abstract, a.year, a.doi, a.file_url, a.file_format, a.language, a.has_formulas, a.is_open_access,
+                 j.name, j.is_vak, j.is_scopus, j.quartile, j.impact_factor
     """
     with db.cursor() as cur:
         cur.execute(sql, (article_id,))
@@ -293,7 +294,12 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
             )
 
             response = model.generate_content(prompt)
-            summary_text = response.text
+            if hasattr(response, 'text'):
+                summary_text = response.text
+            elif hasattr(response, 'parts') and len(response.parts) > 0:
+                summary_text = response.parts[0].text
+            else:
+                summary_text = str(response)
             model_name = "gemini-pro"
         except Exception as e:
             print(f"Gemini error: {e}, falling back to Anthropic Claude")
@@ -413,9 +419,17 @@ def top_authors(db=Depends(get_db)):
         rows = cur.fetchall()
     return [dict(r) for r in rows]
 
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 
 @app.get("/", response_class=HTMLResponse)
 def root():
     with open("index.html", encoding="utf-8") as f:
         return f.read()
+
+@app.get("/library/{filename}")
+def download_pdf(filename: str):
+    """Скачать PDF файл из папки library"""
+    file_path = os.path.join("library", filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Файл не найден")
+    return FileResponse(file_path, media_type='application/pdf', filename=filename)
