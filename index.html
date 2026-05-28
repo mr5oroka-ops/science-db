@@ -785,6 +785,12 @@ async function openModal(id) {
     <div class="card-meta" style="margin-bottom:12px">${badges}</div>
     <div class="modal-title">${article.title}</div>
 
+    ${article.abstract ? `
+    <div class="modal-section">
+      <div class="modal-label">Описание</div>
+      <div class="modal-text">${article.abstract}</div>
+    </div>` : ''}
+
     <div class="modal-section">
       <div class="modal-label">Авторы</div>
       <div class="modal-text">${article.authors || '—'}</div>
@@ -797,12 +803,6 @@ async function openModal(id) {
         ${article.impact_factor ? ` · IF: ${article.impact_factor}` : ''}
       </div>
     </div>
-
-    ${article.abstract ? `
-    <div class="modal-section">
-      <div class="modal-label">Аннотация</div>
-      <div class="modal-text">${article.abstract}</div>
-    </div>` : ''}
 
     <div class="modal-section">
       <div class="modal-label">Предметные области</div>
