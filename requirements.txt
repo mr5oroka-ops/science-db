@@ -8,3 +8,5 @@ google-generativeai
 pymupdf
 unidecode
 pdfplumber
+google-api-python-client
+google-auth

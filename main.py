@@ -435,7 +435,7 @@ def root():
 
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
-    """Скачать PDF файл из папки library или из Railway Bucket"""
+    """Скачать PDF файл из папки library или через Google Drive прямую ссылку"""
     # Сначала пробуем локальные файлы
     library_paths = ["library", "/app/library", "/library"]
     for library_path in library_paths:
@@ -445,42 +445,41 @@ def download_pdf(filename: str):
                     file_path = os.path.join(root, filename)
                     return FileResponse(file_path, media_type='application/pdf', filename=filename)
 
-    # Если локально не найдено, пробуем Railway Bucket через requests
-    if os.getenv("BUCKET_ENDPOINT_URL") and os.getenv("BUCKET_ACCESS_KEY_ID"):
+    # Если локально не найдено, пробуем Google Drive прямую ссылку
+    # Формат: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+    # Прямая ссылка: https://drive.google.com/uc?export=download&id=FILE_ID
+    if os.getenv("GOOGLE_DRIVE_FOLDER_ID"):
         try:
-            import requests
-            import urllib.parse
+            from googleapiclient.discovery import build
+            from google.oauth2.credentials import Credentials
+            import json
 
-            bucket_name = os.getenv("BUCKET_NAME", "railway")
-            object_key = f"library/{filename}"
+            # Загружаем credentials из переменной окружения
+            creds_dict = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS"))
+            credentials = Credentials.from_authorized_user_info(creds_dict)
 
-            # Формируем URL для S3 объекта
-            endpoint = os.getenv("BUCKET_ENDPOINT_URL").rstrip('/')
-            url = f"{endpoint}/{bucket_name}/{object_key}"
+            # Создаем Drive API клиент
+            drive_service = build('drive', 'v3', credentials=credentials)
 
-            # Создаем подпись для S3 запроса (AWS Signature V4)
-            # Для упрощения используем presigned URL через query параметры
-            access_key = os.getenv("BUCKET_ACCESS_KEY_ID")
-            secret_key = os.getenv("BUCKET_SECRET_ACCESS_KEY")
-            region = os.getenv("BUCKET_REGION", "us-east-1")
+            # Ищем файл по имени в указанной папке
+            folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
+            results = drive_service.files().list(q=f"name='{filename}' and '{folder_id}' in parents and mimeType='application/pdf'", fields="files(id, name)").execute()
+            files = results.get('files', [])
 
-            # Для Railway Bucket можно использовать прямые запросы с авторизацией
-            headers = {
-                "Authorization": f"AWS4-HMAC-SHA256 Credential={access_key}/{region}/s3/aws4_request"
-            }
+            if not files:
+                raise HTTPException(status_code=404, detail=f"Файл {filename} не найден на Google Drive")
 
-            response = requests.get(url, headers=headers, timeout=10)
+            file_id = files[0]['id']
 
-            if response.status_code == 200:
-                return Response(content=response.content, media_type='application/pdf', headers={"Content-Disposition": f"attachment; filename={filename}"})
-            else:
-                raise HTTPException(status_code=404, detail=f"Файл не найден в Bucket: {response.text}")
+            # Перенаправляем на прямую ссылку Google Drive
+            direct_link = f"https://drive.google.com/uc?export=download&id={file_id}"
+            return RedirectResponse(url=direct_link)
         except Exception as e:
-            print(f"Bucket error: {e}")
-            raise HTTPException(status_code=500, detail=f"Ошибка скачивания из Bucket: {str(e)}")
+            print(f"Google Drive error: {e}")
+            raise HTTPException(status_code=500, detail=f"Ошибка скачивания с Google Drive: {str(e)}")
 
     # Если ни один способ не сработал
-    raise HTTPException(status_code=404, detail="Файл не найден. Настройте Railway Bucket.")
+    raise HTTPException(status_code=404, detail="Файл не найден. Настройте GOOGLE_DRIVE_FOLDER_ID в Railway.")
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
