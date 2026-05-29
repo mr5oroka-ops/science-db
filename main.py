@@ -436,12 +436,14 @@ def root():
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
     """Скачать PDF файл из папки library (ищет во всех подпапках)"""
-    # Ищем файл во всех подпапках library
-    library_path = "library"
-    for root, dirs, files in os.walk(library_path):
-        if filename in files:
-            file_path = os.path.join(root, filename)
-            return FileResponse(file_path, media_type='application/pdf', filename=filename)
+    # Ищем файл во всех подпапках library (пробуем разные пути)
+    library_paths = ["library", "/app/library", "/library"]
+    for library_path in library_paths:
+        if os.path.exists(library_path):
+            for root, dirs, files in os.walk(library_path):
+                if filename in files:
+                    file_path = os.path.join(root, filename)
+                    return FileResponse(file_path, media_type='application/pdf', filename=filename)
     # Если файл не найден локально, возвращаем сообщение
     raise HTTPException(status_code=404, detail="Файл не найден на сервере. PDF файлы не загружены в Railway.")
 
