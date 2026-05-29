@@ -435,8 +435,8 @@ def root():
 
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
-    """Скачать PDF файл из папки library"""
-    # Ищем файл во всех подпапках library (пробуем разные пути)
+    """Скачать PDF файл из папки library или из Railway Bucket"""
+    # Сначала пробуем локальные файлы
     library_paths = ["library", "/app/library", "/library"]
     for library_path in library_paths:
         if os.path.exists(library_path):
@@ -444,8 +444,43 @@ def download_pdf(filename: str):
                 if filename in files:
                     file_path = os.path.join(root, filename)
                     return FileResponse(file_path, media_type='application/pdf', filename=filename)
-    # Если файл не найден локально, возвращаем сообщение
-    raise HTTPException(status_code=404, detail="Файл не найден на сервере. PDF скачивание временно отключено.")
+
+    # Если локально не найдено, пробуем Railway Bucket через requests
+    if os.getenv("BUCKET_ENDPOINT_URL") and os.getenv("BUCKET_ACCESS_KEY_ID"):
+        try:
+            import requests
+            import urllib.parse
+
+            bucket_name = os.getenv("BUCKET_NAME", "railway")
+            object_key = f"library/{filename}"
+
+            # Формируем URL для S3 объекта
+            endpoint = os.getenv("BUCKET_ENDPOINT_URL").rstrip('/')
+            url = f"{endpoint}/{bucket_name}/{object_key}"
+
+            # Создаем подпись для S3 запроса (AWS Signature V4)
+            # Для упрощения используем presigned URL через query параметры
+            access_key = os.getenv("BUCKET_ACCESS_KEY_ID")
+            secret_key = os.getenv("BUCKET_SECRET_ACCESS_KEY")
+            region = os.getenv("BUCKET_REGION", "us-east-1")
+
+            # Для Railway Bucket можно использовать прямые запросы с авторизацией
+            headers = {
+                "Authorization": f"AWS4-HMAC-SHA256 Credential={access_key}/{region}/s3/aws4_request"
+            }
+
+            response = requests.get(url, headers=headers, timeout=10)
+
+            if response.status_code == 200:
+                return Response(content=response.content, media_type='application/pdf', headers={"Content-Disposition": f"attachment; filename={filename}"})
+            else:
+                raise HTTPException(status_code=404, detail=f"Файл не найден в Bucket: {response.text}")
+        except Exception as e:
+            print(f"Bucket error: {e}")
+            raise HTTPException(status_code=500, detail=f"Ошибка скачивания из Bucket: {str(e)}")
+
+    # Если ни один способ не сработал
+    raise HTTPException(status_code=404, detail="Файл не найден. Настройте Railway Bucket.")
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
