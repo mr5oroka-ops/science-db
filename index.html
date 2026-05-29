@@ -824,12 +824,6 @@ async function openModal(id) {
       </div>
     </div>
 
-    ${article.file_url ? `
-    <div style="margin-top:16px">
-      <a href="/library/${article.file_url}" target="_blank" class="btn-sm" style="display:inline-flex;align-items:center;text-decoration:none">
-        Скачать PDF
-      </a>
-    </div>` : ''}
   `;
 
   document.getElementById('modal').classList.add('open');

@@ -15,7 +15,7 @@ from unidecode import unidecode
 load_dotenv()
 
 # ── Настройки подключения к БД ──────────────────────────────────
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL') or os.getenv('DB_URL')
 
 if DATABASE_URL:
     conn_str = DATABASE_URL
@@ -26,6 +26,11 @@ else:
     DB_USER = os.getenv('DB_USER', 'postgres')
     DB_PASSWORD = os.getenv('DB_PASSWORD', '')
     conn_str = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+# Замена публичного URL на внутренний для Railway
+if 'autorack.proxy.rlwy.net' in conn_str:
+    conn_str = conn_str.replace('autorack.proxy.rlwy.net', 'postgres.railway.internal')
+    conn_str = conn_str.replace(':41049', ':5432')
 
 # ── Папка с PDF ───────────────────────────────────────────────
 BASE_DIR = os.path.join(os.path.dirname(__file__), 'library')

@@ -283,60 +283,68 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
     if not text_to_summarize:
         raise HTTPException(status_code=404, detail="Нет данных для пересказа")
 
-    # Используем Google Gemini через REST API
+    # Используем Google Gemini через REST API с retry
     if os.getenv("GEMINI_API_KEY"):
-        try:
-            import requests
-            api_key = os.getenv("GEMINI_API_KEY")
+        import requests
+        import time
+        api_key = os.getenv("GEMINI_API_KEY")
 
-            # Сначала пробуем получить список доступных моделей
-            list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
-            list_response = requests.get(list_url, timeout=10)
-            list_response.raise_for_status()
-            models_data = list_response.json()
+        # Retry логика
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                # Сначала пробуем получить список доступных моделей
+                list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+                list_response = requests.get(list_url, timeout=10)
+                list_response.raise_for_status()
+                models_data = list_response.json()
 
-            # Ищем доступную модель для генерации текста
-            available_models = []
-            if "models" in models_data:
-                for model in models_data["models"]:
-                    if "generateContent" in model.get("supportedGenerationMethods", []):
-                        available_models.append(model["name"])
+                # Ищем доступную модель для генерации текста
+                available_models = []
+                if "models" in models_data:
+                    for model in models_data["models"]:
+                        if "generateContent" in model.get("supportedGenerationMethods", []):
+                            available_models.append(model["name"])
 
-            if not available_models:
-                raise Exception("Нет доступных моделей для генерации текста")
+                if not available_models:
+                    raise Exception("Нет доступных моделей для генерации текста")
 
-            # Используем первую доступную модель
-            model_name = available_models[0].split("/")[-1]
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+                # Используем первую доступную модель
+                model_name = available_models[0].split("/")[-1]
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
 
-            lang_prompt = "на русском языке" if language == "ru" else "in English"
-            prompt_text = (
-                f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
-                f"следующей научной статьи. Название: «{article['title']}». "
-                f"Текст: {text_to_summarize}"
-            )
+                lang_prompt = "на русском языке" if language == "ru" else "in English"
+                prompt_text = (
+                    f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
+                    f"следующей научной статьи. Название: «{article['title']}». "
+                    f"Текст: {text_to_summarize}"
+                )
 
-            payload = {
-                "contents": [{
-                    "parts": [{
-                        "text": prompt_text
+                payload = {
+                    "contents": [{
+                        "parts": [{
+                            "text": prompt_text
+                        }]
                     }]
-                }]
-            }
+                }
 
-            response = requests.post(url, json=payload, timeout=30)
-            response.raise_for_status()
-            result = response.json()
+                response = requests.post(url, json=payload, timeout=30)
+                response.raise_for_status()
+                result = response.json()
 
-            if "candidates" in result and len(result["candidates"]) > 0:
-                summary_text = result["candidates"][0]["content"]["parts"][0]["text"]
-            else:
-                raise Exception("Нет ответа от модели")
+                if "candidates" in result and len(result["candidates"]) > 0:
+                    summary_text = result["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    raise Exception("Нет ответа от модели")
 
-            model_name = model_name
-        except Exception as e:
-            print(f"Gemini error: {e}")
-            raise HTTPException(status_code=500, detail=f"Ошибка генерации пересказа: {str(e)}")
+                model_name = model_name
+                break  # Успешно, выходим из retry цикла
+            except Exception as e:
+                print(f"Gemini error (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2)  # Ждем перед retry
+                else:
+                    raise HTTPException(status_code=500, detail=f"Ошибка генерации пересказа: {str(e)}")
     else:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY не установлен")
 
@@ -434,4 +442,15 @@ def download_pdf(filename: str):
         if filename in files:
             file_path = os.path.join(root, filename)
             return FileResponse(file_path, media_type='application/pdf', filename=filename)
-    raise HTTPException(status_code=404, detail="Файл не найден")
+    # Если файл не найден локально, возвращаем сообщение
+    raise HTTPException(status_code=404, detail="Файл не найден на сервере. PDF файлы не загружены в Railway.")
+
+@app.post("/api/import")
+def import_data(db=Depends(get_db)):
+    """Импортировать данные из PDF файлов"""
+    try:
+        import import_pdfs_v2
+        result = import_pdfs_v2.main()
+        return {"status": "success", "result": result}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
