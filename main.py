@@ -276,70 +276,69 @@ def get_summary(article_id: int, language: str = "ru", db=Depends(get_db)):
     with db.cursor() as cur:
         cur.execute("SELECT title, abstract FROM articles WHERE id=%s", (article_id,))
         article = cur.fetchone()
-    if not article or not article["abstract"]:
-        raise HTTPException(status_code=404, detail="Нет аннотации для пересказа")
+    if article is None:
+        raise HTTPException(status_code=404, detail="Статья не найдена")
+    # Используем abstract если есть, иначе title
+    text_to_summarize = article["abstract"] if article["abstract"] else article["title"]
+    if not text_to_summarize:
+        raise HTTPException(status_code=404, detail="Нет данных для пересказа")
 
-    # Используем Google Gemini
+    # Используем Google Gemini через REST API
     if os.getenv("GEMINI_API_KEY"):
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-            model = genai.GenerativeModel('gemini-pro')
+            import requests
+            api_key = os.getenv("GEMINI_API_KEY")
+
+            # Сначала пробуем получить список доступных моделей
+            list_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
+            list_response = requests.get(list_url, timeout=10)
+            list_response.raise_for_status()
+            models_data = list_response.json()
+
+            # Ищем доступную модель для генерации текста
+            available_models = []
+            if "models" in models_data:
+                for model in models_data["models"]:
+                    if "generateContent" in model.get("supportedGenerationMethods", []):
+                        available_models.append(model["name"])
+
+            if not available_models:
+                raise Exception("Нет доступных моделей для генерации текста")
+
+            # Используем первую доступную модель
+            model_name = available_models[0].split("/")[-1]
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
 
             lang_prompt = "на русском языке" if language == "ru" else "in English"
-            prompt = (
+            prompt_text = (
                 f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
                 f"следующей научной статьи. Название: «{article['title']}». "
-                f"Аннотация: {article['abstract']}"
+                f"Текст: {text_to_summarize}"
             )
 
-            response = model.generate_content(prompt)
-            if hasattr(response, 'text'):
-                summary_text = response.text
-            elif hasattr(response, 'parts') and len(response.parts) > 0:
-                summary_text = response.parts[0].text
+            payload = {
+                "contents": [{
+                    "parts": [{
+                        "text": prompt_text
+                    }]
+                }]
+            }
+
+            response = requests.post(url, json=payload, timeout=30)
+            response.raise_for_status()
+            result = response.json()
+
+            if "candidates" in result and len(result["candidates"]) > 0:
+                summary_text = result["candidates"][0]["content"]["parts"][0]["text"]
             else:
-                summary_text = str(response)
-            model_name = "gemini-pro"
+                raise Exception("Нет ответа от модели")
+
+            model_name = model_name
         except Exception as e:
-            print(f"Gemini error: {e}, falling back to Anthropic Claude")
-            # Fallback to Anthropic Claude
-            import anthropic
-            client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
-            lang_prompt = "на русском языке" if language == "ru" else "in English"
-            prompt = (
-                f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
-                f"следующей научной статьи. Название: «{article['title']}». "
-                f"Аннотация: {article['abstract']}"
-            )
-
-            message = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=400,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            summary_text = message.content[0].text
-            model_name = "claude-sonnet-4-20250514"
+            print(f"Gemini error: {e}")
+            raise HTTPException(status_code=500, detail=f"Ошибка генерации пересказа: {str(e)}")
     else:
-        # Используем только Anthropic Claude
-        import anthropic
-        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
-        lang_prompt = "на русском языке" if language == "ru" else "in English"
-        prompt = (
-            f"Сделай краткий пересказ (3-5 предложений) {lang_prompt} "
-            f"следующей научной статьи. Название: «{article['title']}». "
-            f"Аннотация: {article['abstract']}"
-        )
-
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=400,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        summary_text = message.content[0].text
-        model_name = "claude-sonnet-4-20250514"
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY не установлен")
 
     # 3. Сохраняем в БД
     with db.cursor() as cur:
@@ -428,8 +427,11 @@ def root():
 
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
-    """Скачать PDF файл из папки library"""
-    file_path = os.path.join("library", filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Файл не найден")
-    return FileResponse(file_path, media_type='application/pdf', filename=filename)
+    """Скачать PDF файл из папки library (ищет во всех подпапках)"""
+    # Ищем файл во всех подпапках library
+    library_path = "library"
+    for root, dirs, files in os.walk(library_path):
+        if filename in files:
+            file_path = os.path.join(root, filename)
+            return FileResponse(file_path, media_type='application/pdf', filename=filename)
+    raise HTTPException(status_code=404, detail="Файл не найден")
