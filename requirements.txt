@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+psycopg2-binary
+python-dotenv
+anthropic
+openai
+google-generativeai
+pymupdf
+unidecode
+pdfplumber

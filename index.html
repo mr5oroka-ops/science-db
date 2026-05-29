@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>НаукаПоиск — Агрегатор научных публикаций</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0d0f14;
+    --surface:   #141820;
+    --card:      #1a2030;
+    --border:    #252d3d;
+    --accent:    #4f8eff;
+    --accent2:   #ff6b6b;
+    --gold:      #f5c842;
+    --green:     #3dd68c;
+    --text:      #e8eaf0;
+    --muted:     #7a8299;
+    --r:         8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─────────────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, #0d0f14 0%, #0e1620 50%, #0d1118 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .search-wrap {
+    flex: 1;
+    max-width: 700px;
+    position: relative;
+  }
+
+  #main-search {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 12px 52px 12px 20px;
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  #main-search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,142,255,.15);
+  }
+  #main-search::placeholder { color: var(--muted); }
+
+  .search-btn {
+    position: absolute;
+    right: 8px; top: 50%;
+    transform: translateY(-50%);
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    width: 36px; height: 36px;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: background .2s, transform .1s;
+  }
+  .search-btn:hover { background: #3a78ee; }
+  .search-btn:active { transform: translateY(-50%) scale(.93); }
+  .search-btn svg { width: 16px; height: 16px; fill: #fff; }
+
+  /* ─── LAYOUT ─────────────────────────────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 80px);
+  }
+
+  /* ─── SIDEBAR ─────────────────────────────────────── */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .filter-group h4 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color .15s;
+  }
+  .filter-group label:hover { color: var(--accent); }
+
+  .filter-group input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 15px; height: 15px;
+  }
+
+  .filter-group select,
+  .filter-group input[type=number],
+  .filter-group input[type=text] {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Golos Text', sans-serif;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color .2s;
+    margin-top: 4px;
+  }
+  .filter-group select:focus,
+  .filter-group input:focus {
+    border-color: var(--accent);
+  }
+  .filter-group select option { background: var(--card); }
+
+  .year-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .apply-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--r);
+    padding: 10px;
+    width: 100%;
+    cursor: pointer;
+    font-family: 'Golos Text', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background .2s, transform .1s;
+    margin-top: 4px;
+  }
+  .apply-btn:hover { background: #3a78ee; }
+  .apply-btn:active { transform: scale(.97); }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  /* ─── MAIN ─────────────────────────────────────────── */
+  main {
+    padding: 28px 32px;
+    overflow-y: auto;
+  }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .results-count {
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+  .results-count strong { color: var(--accent); }
+
+  /* ─── ARTICLE CARD ─────────────────────────────────── */
+  .article-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    transition: border-color .2s, transform .15s, box-shadow .2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .article-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .article-card:hover {
+    border-color: var(--accent);
+    transform: translateX(3px);
+    box-shadow: -4px 0 20px rgba(79,142,255,.12);
+  }
+  .article-card:hover::before { opacity: 1; }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+  }
+  .badge-vak  { background: rgba(245,200,66,.12); color: var(--gold); border: 1px solid rgba(245,200,66,.25); }
+  .badge-scopus { background: rgba(79,142,255,.12); color: var(--accent); border: 1px solid rgba(79,142,255,.25); }
+  .badge-open  { background: rgba(61,214,140,.12); color: var(--green); border: 1px solid rgba(61,214,140,.25); }
+  .badge-formula { background: rgba(255,107,107,.12); color: var(--accent2); border: 1px solid rgba(255,107,107,.25); }
+  .badge-q1 { background: rgba(245,200,66,.2); color: var(--gold); border: 1px solid rgba(245,200,66,.3); }
+  .badge-q2 { background: rgba(79,142,255,.15); color: #82b0ff; border: 1px solid rgba(79,142,255,.2); }
+  .badge-q3 { background: rgba(180,180,180,.1); color: #aaa; border: 1px solid rgba(180,180,180,.15); }
+  .badge-q4 { background: rgba(180,180,180,.08); color: #888; border: 1px solid rgba(180,180,180,.1); }
+  .badge-lang { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid rgba(255,255,255,.08); }
+  .badge-fmt  { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid rgba(255,255,255,.08); }
+
+  .card-abstract {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-authors {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-sm {
+    padding: 5px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: 'Golos Text', sans-serif;
+    transition: all .15s;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-sm.primary:hover { background: #3a78ee; }
+
+  .card-keywords {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: rgba(79,142,255,.7);
+    margin-top: 8px;
+  }
+
+  /* ─── MODAL ─────────────────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 1000;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow-y: auto;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 720px;
+    padding: 32px;
+    position: relative;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-close {
+    position: absolute;
+    right: 20px; top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--muted);
+    font-size: 1.1rem;
+    transition: color .15s, border-color .15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--accent); }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.4;
+    padding-right: 40px;
+  }
+
+  .modal-section { margin-bottom: 20px; }
+  .modal-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .modal-text {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #c8ccda;
+  }
+
+  .summary-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--text);
+    position: relative;
+  }
+
+  .summary-box.loading {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .summary-loading {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; }
+  .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
+
+  /* ─── EMPTY / LOADING STATES ────────────────────────── */
+  .state-box {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+  }
+  .state-box svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: .3; }
+  .state-box h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--text); }
+  .state-box p  { font-size: 0.875rem; }
+
+  /* ─── SCROLLBAR ─────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">Наука<span>Поиск</span></div>
+  <div class="search-wrap">
+    <input type="text" id="main-search" placeholder="Поиск по названию и аннотации…" autocomplete="off">
+    <button class="search-btn" onclick="applyFilters()" title="Найти">
+      <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR: ФИЛЬТРЫ -->
+  <aside>
+    <div class="filter-group">
+      <h4>Авторитетность</h4>
+      <label><input type="checkbox" id="f-vak"> Журнал ВАК</label>
+      <label><input type="checkbox" id="f-scopus"> Scopus</label>
+      <label><input type="checkbox" id="f-open"> Открытый доступ</label>
+      <label><input type="checkbox" id="f-formulas"> Содержит формулы LaTeX</label>
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Квартиль журнала</h4>
+      <select id="f-quartile">
+        <option value="">Любой</option>
+        <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+      </select>
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Год публикации</h4>
+      <div class="year-range">
+        <input type="number" id="f-year-from" placeholder="От" min="1900" max="2100">
+        <input type="number" id="f-year-to"   placeholder="До" min="1900" max="2100">
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Ключевое слово</h4>
+      <input type="text" id="f-keyword" placeholder="например: RSA, SQL…">
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Автор</h4>
+      <input type="text" id="f-author" placeholder="например: Иванов И.И.">
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Язык публикации</h4>
+      <select id="f-lang">
+        <option value="">Любой</option>
+        <option value="ru">Русский</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Формат документа</h4>
+      <select id="f-format">
+        <option value="">Любой</option>
+        <option value="pdf">PDF</option>
+        <option value="docx">DOCX</option>
+        <option value="tex">LaTeX / TeX</option>
+      </select>
+    </div>
+
+    <hr class="divider">
+
+    <div class="filter-group">
+      <h4>Рейтинг автора (мин.)</h4>
+      <select id="f-rating">
+        <option value="">Любой</option>
+        <option value="4.5">4.5+</option>
+        <option value="4.0">4.0+</option>
+        <option value="3.5">3.5+</option>
+        <option value="3.0">3.0+</option>
+      </select>
+    </div>
+
+    <button class="apply-btn" onclick="applyFilters()">Применить фильтры</button>
+    <button class="apply-btn" style="background:transparent;border:1px solid var(--border);color:var(--muted)" onclick="resetFilters()">Сбросить</button>
+  </aside>
+
+  <!-- MAIN: РЕЗУЛЬТАТЫ -->
+  <main>
+    <div class="results-header">
+      <div class="results-count" id="results-count">Загрузка…</div>
+    </div>
+    <div id="results-container">
+      <div class="state-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+        </svg>
+        <h3>Загружаем публикации…</h3>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: ДЕТАЛИ СТАТЬИ -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-body">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ── Конфигурация ──────────────────────────────────────────
+const API = 'https://web-production-89c45.up.railway.app/api';
+
+// ── Демо-данные (когда бэкенд недоступен) ─────────────────
+const DEMO_ARTICLES = [
+  {
+    id: 1,
+    title: 'Методы оптимизации запросов в реляционных СУБД',
+    abstract: 'В статье рассматриваются алгоритмы оптимизации SQL-запросов с использованием индексов B-tree и Hash. Анализируются планы выполнения запросов в PostgreSQL и MySQL.',
+    year: 2023,
+    journal_name: 'Программная инженерия',
+    is_vak: true, is_scopus: false, quartile: 'Q3',
+    impact_factor: 0.89,
+    file_format: 'pdf', language: 'ru',
+    has_formulas: false, is_open_access: true,
+    authors: 'Иванов Иван Иванович (д.т.н.); Петрова Анна Сергеевна (к.т.н.)',
+    keywords: 'SQL, нормализация, индексирование',
+    areas: 'Базы данных',
+    doi: '10.1234/db.2023.001',
+  },
+  {
+    id: 2,
+    title: 'Применение RSA-шифрования в распределённых системах',
+    abstract: 'Анализируется применение асимметричного шифрования RSA в микросервисных архитектурах. Рассматривается использование формулы C = Mᵉ mod n для защиты API-эндпоинтов.',
+    year: 2022,
+    journal_name: 'Проблемы информационной безопасности',
+    is_vak: true, is_scopus: true, quartile: 'Q2',
+    impact_factor: 1.23,
+    file_format: 'pdf', language: 'ru',
+    has_formulas: true, is_open_access: true,
+    authors: 'Иванов Иван Иванович (д.т.н.)',
+    keywords: 'шифрование, RSA',
+    areas: 'Информационная безопасность, Криптография',
+    doi: '10.5678/sec.2022.042',
+  },
+  {
+    id: 3,
+    title: 'Deep Learning for Database Query Optimization',
+    abstract: 'We propose a neural network approach to predict optimal query execution plans in relational DBMS. Our method outperforms traditional cost-based optimizers by 34% on TPC-H benchmarks.',
+    year: 2024,
+    journal_name: 'Journal of Database Management',
+    is_vak: false, is_scopus: true, quartile: 'Q1',
+    impact_factor: 2.45,
+    file_format: 'pdf', language: 'en',
+    has_formulas: false, is_open_access: false,
+    authors: 'Smith John (PhD)',
+    keywords: 'машинное обучение, нейронные сети',
+    areas: 'Базы данных, Машинное обучение',
+    doi: '10.9999/jdm.2024.007',
+  }
+];
+
+let allArticles = [];
+let useDemoData = false;
+
+// ── Загрузка данных ───────────────────────────────────────
+async function loadArticles(params = {}) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => { if (v !== '' && v !== null && v !== undefined) qs.append(k, v); });
+  
+  try {
+    const res = await fetch(`${API}/articles?${qs}`, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    useDemoData = false;
+    return await res.json();
+  } catch {
+    useDemoData = true;
+    return filterDemoData(params);
+  }
+}
+
+function filterDemoData(params) {
+  return DEMO_ARTICLES.filter(a => {
+    if (params.is_vak === 'true'    && !a.is_vak)         return false;
+    if (params.is_scopus === 'true' && !a.is_scopus)      return false;
+    if (params.is_open_access === 'true' && !a.is_open_access) return false;
+    if (params.has_formulas === 'true' && !a.has_formulas) return false;
+    if (params.quartile && a.quartile !== params.quartile) return false;
+    if (params.language && a.language !== params.language) return false;
+    if (params.file_format && a.file_format !== params.file_format) return false;
+    if (params.search) {
+      const q = params.search.toLowerCase();
+      if (!a.title.toLowerCase().includes(q) && !a.abstract.toLowerCase().includes(q)) return false;
+    }
+    if (params.keyword) {
+      const q = params.keyword.toLowerCase();
+      if (!a.keywords.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+// ── Рендер карточки ───────────────────────────────────────
+function quartileBadge(q) {
+  if (!q) return '';
+  return `<span class="badge badge-${q.toLowerCase()}">${q}</span>`;
+}
+
+function renderCard(a) {
+  const badges = [
+    a.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
+    a.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
+    a.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
+    a.has_formulas   ? '<span class="badge badge-formula">∑ Формулы</span>' : '',
+    quartileBadge(a.quartile),
+    a.language  ? `<span class="badge badge-lang">${a.language.toUpperCase()}</span>` : '',
+    a.file_format ? `<span class="badge badge-fmt">.${a.file_format}</span>` : '',
+  ].filter(Boolean).join('');
+
+  return `
+    <div class="article-card" onclick="openModal(${a.id})">
+      <div class="card-title">${a.title}</div>
+      <div class="card-meta">${badges}</div>
+      ${a.abstract ? `<div class="card-abstract">${a.abstract}</div>` : ''}
+      <div class="card-footer">
+        <div>
+          <div class="card-authors">${a.authors || '—'} · ${a.year || '?'} · ${a.journal_name || 'Журнал не указан'}</div>
+          ${a.keywords ? `<div class="card-keywords"># ${a.keywords}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          ${a.doi ? `<button class="btn-sm" onclick="openDOI(event,'${a.doi}')">DOI</button>` : ''}
+          <button class="btn-sm primary" onclick="openModal(${a.id}); event.stopPropagation()">Подробнее</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openDOI(event, doi) {
+  event.stopPropagation();
+  window.open('https://doi.org/' + doi, '_blank');
+}
+
+// ── Рендер результатов ────────────────────────────────────
+function renderResults(articles) {
+  const container = document.getElementById('results-container');
+  const countEl = document.getElementById('results-count');
+
+  if (articles.length === 0) {
+    container.innerHTML = `
+      <div class="state-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <h3>Ничего не найдено</h3>
+        <p>Попробуйте изменить поисковый запрос или снять некоторые фильтры</p>
+      </div>`;
+    countEl.innerHTML = 'Найдено: <strong>0</strong>';
+    return;
+  }
+
+  const note = useDemoData ? ' <span style="color:var(--accent2);font-size:.8em">(демо-режим)</span>' : '';
+  countEl.innerHTML = `Найдено: <strong>${articles.length}</strong> публикаций${note}`;
+  container.innerHTML = articles.map(renderCard).join('');
+}
+
+// ── Применить фильтры ─────────────────────────────────────
+async function applyFilters() {
+  const params = {
+    search:          document.getElementById('main-search').value.trim(),
+    keyword:         document.getElementById('f-keyword').value.trim(),
+    author:          document.getElementById('f-author').value.trim(),
+    is_vak:          document.getElementById('f-vak').checked || '',
+    is_scopus:       document.getElementById('f-scopus').checked || '',
+    is_open_access:  document.getElementById('f-open').checked || '',
+    has_formulas:    document.getElementById('f-formulas').checked || '',
+    quartile:        document.getElementById('f-quartile').value,
+    year_from:       document.getElementById('f-year-from').value,
+    year_to:         document.getElementById('f-year-to').value,
+    language:        document.getElementById('f-lang').value,
+    file_format:     document.getElementById('f-format').value,
+    min_author_rating: document.getElementById('f-rating').value,
+  };
+
+  document.getElementById('results-count').innerHTML = 'Поиск…';
+  document.getElementById('results-container').innerHTML = `
+    <div class="state-box">
+      <div class="summary-loading" style="justify-content:center">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span style="margin-left:8px">Загрузка результатов…</span>
+      </div>
+    </div>`;
+
+  const articles = await loadArticles(params);
+  renderResults(articles);
+}
+
+function resetFilters() {
+  document.getElementById('main-search').value = '';
+  document.getElementById('f-keyword').value = '';
+  document.getElementById('f-author').value = '';
+  ['f-vak','f-scopus','f-open','f-formulas'].forEach(id => document.getElementById(id).checked = false);
+  ['f-quartile','f-lang','f-format','f-rating'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-year-from').value = '';
+  document.getElementById('f-year-to').value = '';
+  applyFilters();
+}
+
+// ── Модальное окно ────────────────────────────────────────
+async function openModal(id) {
+  let article;
+  if (useDemoData) {
+    article = DEMO_ARTICLES.find(a => a.id === id);
+  } else {
+    try {
+      const res = await fetch(`${API}/articles/${id}`);
+      article = await res.json();
+    } catch {
+      article = DEMO_ARTICLES.find(a => a.id === id);
+    }
+  }
+  if (!article) return;
+
+  const badges = [
+    article.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
+    article.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
+    article.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
+    article.has_formulas   ? '<span class="badge badge-formula">∑ Формулы LaTeX</span>' : '',
+    quartileBadge(article.quartile),
+  ].filter(Boolean).join('');
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="card-meta" style="margin-bottom:12px">${badges}</div>
+    <div class="modal-title">${article.title}</div>
+
+    ${article.abstract ? `
+    <div class="modal-section">
+      <div class="modal-label">Описание</div>
+      <div class="modal-text">${article.abstract}</div>
+    </div>` : ''}
+
+    <div class="modal-section">
+      <div class="modal-label">Авторы</div>
+      <div class="modal-text">${article.authors || '—'}</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Журнал · Год · IF</div>
+      <div class="modal-text">
+        ${article.journal_name || '—'} · ${article.year || '?'}
+        ${article.impact_factor ? ` · IF: ${article.impact_factor}` : ''}
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Предметные области</div>
+      <div class="modal-text">${article.areas || '—'}</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label">Ключевые слова</div>
+      <div class="modal-text" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:rgba(79,142,255,.8)">${article.keywords || '—'}</div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-label" style="display:flex;justify-content:space-between;align-items:center">
+        <span>AI-пересказ</span>
+        <button class="btn-sm" onclick="generateSummary(${article.id})" id="summary-btn">Сгенерировать</button>
+      </div>
+      <div class="summary-box loading" id="summary-box">
+        Нажмите «Сгенерировать» для получения краткого пересказа через нейросеть
+      </div>
+    </div>
+
+    ${article.doi ? `
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <a href="https://doi.org/${article.doi}" target="_blank" class="btn-sm primary" style="display:inline-block;text-decoration:none">
+        Открыть по DOI →
+      </a>
+      ${article.file_url ? `
+      <a href="/library/${article.file_url}" target="_blank" class="btn-sm" style="display:inline-block;text-decoration:none">
+        Скачать PDF
+      </a>` : ''}
+    </div>` : ''}
+  `;
+
+  document.getElementById('modal').classList.add('open');
+}
+
+async function generateSummary(articleId) {
+  const box = document.getElementById('summary-box');
+  const btn = document.getElementById('summary-btn');
+  btn.disabled = true;
+  box.innerHTML = `<div class="summary-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:8px">Нейросеть анализирует текст…</span></div>`;
+  box.classList.add('loading');
+
+  try {
+    const res = await fetch(`${API}/articles/${articleId}/summary?language=ru`, { signal: AbortSignal.timeout(30000) });
+    const data = await res.json();
+    box.innerHTML = data.summary_text;
+    box.classList.remove('loading');
+  } catch {
+    // Демо-пересказ
+    await new Promise(r => setTimeout(r, 1500));
+    box.innerHTML = 'Статья посвящена анализу современных подходов в исследуемой области. Авторы предлагают оригинальный метод, демонстрирующий улучшение ключевых показателей по сравнению с существующими решениями. Результаты подтверждены экспериментально на реальных наборах данных.';
+    box.classList.remove('loading');
+  }
+  btn.textContent = 'Обновить';
+  btn.disabled = false;
+}
+
+function closeModal(event) {
+  if (event.target === document.getElementById('modal')) {
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+function closeModalDirect() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+// Enter в поиске
+document.getElementById('main-search').addEventListener('keydown', e => {
+  if (e.key === 'Enter') applyFilters();
+});
+
+// Инициализация
+applyFilters();
+</script>
+</body>
+</html>
