@@ -680,7 +680,7 @@ function renderCard(a) {
           ${a.keywords ? `<div class="card-keywords"># ${a.keywords}</div>` : ''}
         </div>
         <div class="card-actions">
-          ${a.doi ? `<button class="btn-sm" onclick="openDOI(event,'${a.doi}')">DOI</button>` : ''}
+          ${a.doi ? `<button class="btn-sm" onclick="openDOI(event,'${a.doi}')">🔗 Источник</button>` : ''}
           ${a.file_url && a.file_url.startsWith('https://drive') ? `<button class="btn-sm" onclick="downloadPDF(event,'${a.file_url}')">⬇ Скачать PDF</button>` : ''}
           <button class="btn-sm primary" onclick="openModal(${a.id}); event.stopPropagation()">Подробнее</button>
         </div>
