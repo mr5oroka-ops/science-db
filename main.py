@@ -435,8 +435,8 @@ def root():
 
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
-    """Скачать PDF файл из папки library или через Google Drive прямую ссылку"""
-    # Сначала пробуем локальные файлы
+    """Скачать PDF файл из папки library"""
+    # Ищем файл во всех подпапках library (пробуем разные пути)
     library_paths = ["library", "/app/library", "/library"]
     for library_path in library_paths:
         if os.path.exists(library_path):
@@ -444,41 +444,8 @@ def download_pdf(filename: str):
                 if filename in files:
                     file_path = os.path.join(root, filename)
                     return FileResponse(file_path, media_type='application/pdf', filename=filename)
-
-    # Если локально не найдено, пробуем Google Drive прямую ссылку
-    # Формат прямой ссылки: https://drive.google.com/uc?export=download&id=FILE_ID
-    if os.getenv("GOOGLE_DRIVE_FOLDER_ID"):
-        try:
-            from googleapiclient.discovery import build
-            from google.oauth2.credentials import Credentials
-            import json
-
-            # Загружаем credentials из переменной окружения
-            creds_dict = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS"))
-            credentials = Credentials.from_authorized_user_info(creds_dict)
-
-            # Создаем Drive API клиент
-            drive_service = build('drive', 'v3', credentials=credentials)
-
-            # Ищем файл по имени в указанной папке
-            folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
-            results = drive_service.files().list(q=f"name='{filename}' and '{folder_id}' in parents and mimeType='application/pdf'", fields="files(id, name)").execute()
-            files = results.get('files', [])
-
-            if not files:
-                raise HTTPException(status_code=404, detail=f"Файл {filename} не найден на Google Drive")
-
-            file_id = files[0]['id']
-
-            # Перенаправляем на прямую ссылку Google Drive
-            direct_link = f"https://drive.google.com/uc?export=download&id={file_id}"
-            return RedirectResponse(url=direct_link)
-        except Exception as e:
-            print(f"Google Drive error: {e}")
-            raise HTTPException(status_code=500, detail=f"Ошибка скачивания с Google Drive: {str(e)}")
-
-    # Если ни один способ не сработал
-    raise HTTPException(status_code=404, detail="Файл не найден. Настройте GOOGLE_DRIVE_FOLDER_ID в Railway.")
+    # Если файл не найден локально, возвращаем сообщение
+    raise HTTPException(status_code=404, detail="Файл не найден на сервере. PDF скачивание временно отключено.")
 
 @app.post("/api/upload")
 async def upload_file(file: UploadFile = File(...)):
