@@ -461,8 +461,8 @@ def download_pdf(filename: str):
             # Создаем Drive API клиент
             drive_service = build('drive', 'v3', credentials=credentials)
 
-            # Ищем файл по имени
-            results = drive_service.files().list(q=f"name='{filename}'", fields="files(id, name)").execute()
+            # Ищем файл по имени во всех папках
+            results = drive_service.files().list(q=f"name='{filename}' and mimeType='application/pdf'", fields="files(id, name, parents)").execute()
             files = results.get('files', [])
 
             if not files:
