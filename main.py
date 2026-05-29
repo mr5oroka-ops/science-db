@@ -7,7 +7,7 @@
 import os
 import json
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response, RedirectResponse
@@ -479,6 +479,25 @@ def download_pdf(filename: str):
 
     # Если ни один способ не сработал
     raise HTTPException(status_code=404, detail="Файл не найден. Настройте GOOGLE_DRIVE_FOLDER_ID в Railway.")
+
+@app.post("/api/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """Загрузить PDF файл в Railway volume"""
+    try:
+        # Создаем папку library если не существует
+        library_path = "/app/library"
+        if not os.path.exists(library_path):
+            os.makedirs(library_path)
+
+        # Сохраняем файл
+        file_path = os.path.join(library_path, file.filename)
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+
+        return {"status": "success", "filename": file.filename}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.post("/api/import")
 def import_data(db=Depends(get_db)):
