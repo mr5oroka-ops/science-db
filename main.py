@@ -10,7 +10,7 @@ from typing import Optional, List
 from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 import psycopg2
 import psycopg2.extras
@@ -435,8 +435,8 @@ def root():
 
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
-    """Скачать PDF файл из папки library (ищет во всех подпапках)"""
-    # Ищем файл во всех подпапках library (пробуем разные пути)
+    """Скачать PDF файл из папки library или через Google Drive"""
+    # Сначала пробуем локальные файлы
     library_paths = ["library", "/app/library", "/library"]
     for library_path in library_paths:
         if os.path.exists(library_path):
@@ -444,8 +444,47 @@ def download_pdf(filename: str):
                 if filename in files:
                     file_path = os.path.join(root, filename)
                     return FileResponse(file_path, media_type='application/pdf', filename=filename)
-    # Если файл не найден локально, возвращаем сообщение
-    raise HTTPException(status_code=404, detail="Файл не найден на сервере. PDF файлы не загружены в Railway.")
+
+    # Если локально не найдено, пробуем Google Drive
+    if os.getenv("GOOGLE_DRIVE_CREDENTIALS"):
+        try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            from googleapiclient.http import MediaIoBaseDownload
+            import io
+
+            # Загружаем credentials из переменной окружения
+            import json
+            creds_dict = json.loads(os.getenv("GOOGLE_DRIVE_CREDENTIALS"))
+            credentials = Credentials.from_authorized_user_info(creds_dict)
+
+            # Создаем Drive API клиент
+            drive_service = build('drive', 'v3', credentials=credentials)
+
+            # Ищем файл по имени
+            results = drive_service.files().list(q=f"name='{filename}'", fields="files(id, name)").execute()
+            files = results.get('files', [])
+
+            if not files:
+                raise HTTPException(status_code=404, detail=f"Файл {filename} не найден на Google Drive")
+
+            file_id = files[0]['id']
+
+            # Скачиваем файл
+            request = drive_service.files().get_media(fileId=file_id)
+            file_stream = io.BytesIO()
+            downloader = MediaIoBaseDownload(file_stream, request)
+            downloader.download()
+
+            # Возвращаем файл
+            file_stream.seek(0)
+            return Response(content=file_stream.read(), media_type='application/pdf', headers={"Content-Disposition": f"attachment; filename={filename}"})
+        except Exception as e:
+            print(f"Google Drive error: {e}")
+            raise HTTPException(status_code=500, detail=f"Ошибка скачивания с Google Drive: {str(e)}")
+
+    # Если ни один способ не сработал
+    raise HTTPException(status_code=404, detail="Файл не найден. Настройте Google Drive или загрузите файлы локально.")
 
 @app.post("/api/import")
 def import_data(db=Depends(get_db)):
