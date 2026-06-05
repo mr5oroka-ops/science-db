@@ -732,6 +732,16 @@ function renderResults(articles) {
   container.innerHTML = articles.map(renderCard).join('');
 }
 
+function toggleAdmin() {
+  const pwd = prompt('Введите пароль администратора:');
+  if (pwd === 'admin2025') {
+    document.getElementById('btn-add-article').style.display = 'block';
+    alert('Режим администратора активирован');
+  } else if (pwd !== null) {
+    alert('Неверный пароль');
+  }
+}
+  
 // ── Применить фильтры ─────────────────────────────────────
 async function applyFilters() {
   const params = {
