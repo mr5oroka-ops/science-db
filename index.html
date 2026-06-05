@@ -20,244 +20,98 @@
     --muted:     #7a8299;
     --r:         8px;
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Golos Text', sans-serif; min-height: 100vh; overflow-x: hidden; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Golos Text', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ─── HEADER ─────────────────────────────────────── */
+  /* HEADER */
   header {
     background: linear-gradient(135deg, #0d0f14 0%, #0e1620 50%, #0d1118 100%);
     border-bottom: 1px solid var(--border);
-    padding: 20px 40px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    padding: 16px 40px;
+    display: flex; align-items: center; gap: 24px;
+    position: sticky; top: 0; z-index: 100;
     backdrop-filter: blur(10px);
   }
-
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-    letter-spacing: -0.5px;
-  }
+  .logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; color: var(--text); white-space: nowrap; }
   .logo span { color: var(--accent); }
-
-  .search-wrap {
-    flex: 1;
-    max-width: 700px;
-    position: relative;
-  }
-
+  .search-wrap { flex: 1; max-width: 700px; position: relative; }
   #main-search {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 40px;
-    padding: 12px 52px 12px 20px;
-    color: var(--text);
-    font-family: 'Golos Text', sans-serif;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: 40px; padding: 12px 52px 12px 20px;
+    color: var(--text); font-family: 'Golos Text', sans-serif; font-size: 0.95rem;
+    outline: none; transition: border-color .2s, box-shadow .2s;
   }
-  #main-search:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(79,142,255,.15);
-  }
+  #main-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,255,.15); }
   #main-search::placeholder { color: var(--muted); }
-
   .search-btn {
-    position: absolute;
-    right: 8px; top: 50%;
-    transform: translateY(-50%);
-    background: var(--accent);
-    border: none;
-    border-radius: 50%;
-    width: 36px; height: 36px;
-    cursor: pointer;
-    display: grid; place-items: center;
-    transition: background .2s, transform .1s;
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: var(--accent); border: none; border-radius: 50%;
+    width: 36px; height: 36px; cursor: pointer; display: grid; place-items: center;
+    transition: background .2s;
   }
   .search-btn:hover { background: #3a78ee; }
-  .search-btn:active { transform: translateY(-50%) scale(.93); }
   .search-btn svg { width: 16px; height: 16px; fill: #fff; }
-
-  /* ─── LAYOUT ─────────────────────────────────────── */
-  .layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    min-height: calc(100vh - 80px);
+  .header-admin-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 8px 16px; border-radius: var(--r); cursor: pointer;
+    font-family: 'Golos Text', sans-serif; font-size: 0.82rem; white-space: nowrap;
+    transition: all .15s;
   }
+  .header-admin-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ─── SIDEBAR ─────────────────────────────────────── */
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 280px 1fr; min-height: calc(100vh - 73px); }
+
+  /* SIDEBAR */
   aside {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 24px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
+    background: var(--surface); border-right: 1px solid var(--border);
+    padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
   }
-
-  .filter-group h4 {
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .filter-group label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    color: var(--text);
-    cursor: pointer;
-    padding: 4px 0;
-    transition: color .15s;
-  }
+  .filter-group h4 { font-size: 0.7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .filter-group label { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text); cursor: pointer; padding: 4px 0; transition: color .15s; }
   .filter-group label:hover { color: var(--accent); }
-
-  .filter-group input[type=checkbox] {
-    accent-color: var(--accent);
-    width: 15px; height: 15px;
+  .filter-group input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+  .filter-group select, .filter-group input[type=number], .filter-group input[type=text] {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 8px 12px; color: var(--text);
+    font-family: 'Golos Text', sans-serif; font-size: 0.875rem; outline: none;
+    transition: border-color .2s; margin-top: 4px;
   }
-
-  .filter-group select,
-  .filter-group input[type=number],
-  .filter-group input[type=text] {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 8px 12px;
-    color: var(--text);
-    font-family: 'Golos Text', sans-serif;
-    font-size: 0.875rem;
-    outline: none;
-    transition: border-color .2s;
-    margin-top: 4px;
-  }
-  .filter-group select:focus,
-  .filter-group input:focus {
-    border-color: var(--accent);
-  }
+  .filter-group select:focus, .filter-group input:focus { border-color: var(--accent); }
   .filter-group select option { background: var(--card); }
-
-  .year-range {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
+  .year-range { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .apply-btn {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--r);
-    padding: 10px;
-    width: 100%;
-    cursor: pointer;
-    font-family: 'Golos Text', sans-serif;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: background .2s, transform .1s;
-    margin-top: 4px;
+    background: var(--accent); color: #fff; border: none; border-radius: var(--r);
+    padding: 10px; width: 100%; cursor: pointer; font-family: 'Golos Text', sans-serif;
+    font-weight: 600; font-size: 0.9rem; transition: background .2s, transform .1s; margin-top: 4px;
   }
   .apply-btn:hover { background: #3a78ee; }
-  .apply-btn:active { transform: scale(.97); }
-
+  .apply-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .apply-btn.secondary:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
   .divider { border: none; border-top: 1px solid var(--border); }
 
-  /* ─── MAIN ─────────────────────────────────────────── */
-  main {
-    padding: 28px 32px;
-    overflow-y: auto;
-  }
-
-  .results-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .results-count {
-    font-size: 0.875rem;
-    color: var(--muted);
-  }
+  /* MAIN */
+  main { padding: 28px 32px; overflow-y: auto; }
+  .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .results-count { font-size: 0.875rem; color: var(--muted); }
   .results-count strong { color: var(--accent); }
 
-  /* ─── ARTICLE CARD ─────────────────────────────────── */
+  /* CARD */
   .article-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 16px;
     transition: border-color .2s, transform .15s, box-shadow .2s;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
+    cursor: pointer; position: relative; overflow: hidden;
   }
   .article-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--accent);
-    opacity: 0;
-    transition: opacity .2s;
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--accent); opacity: 0; transition: opacity .2s;
   }
-  .article-card:hover {
-    border-color: var(--accent);
-    transform: translateX(3px);
-    box-shadow: -4px 0 20px rgba(79,142,255,.12);
-  }
+  .article-card:hover { border-color: var(--accent); transform: translateX(3px); box-shadow: -4px 0 20px rgba(79,142,255,.12); }
   .article-card:hover::before { opacity: 1; }
-
-  .card-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 8px;
-    line-height: 1.4;
-  }
-
-  .card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: .03em;
-  }
+  .card-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 8px; line-height: 1.4; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; letter-spacing: .03em; }
   .badge-vak  { background: rgba(245,200,66,.12); color: var(--gold); border: 1px solid rgba(245,200,66,.25); }
   .badge-scopus { background: rgba(79,142,255,.12); color: var(--accent); border: 1px solid rgba(79,142,255,.25); }
   .badge-open  { background: rgba(61,214,140,.12); color: var(--green); border: 1px solid rgba(61,214,140,.25); }
@@ -268,235 +122,121 @@
   .badge-q4 { background: rgba(180,180,180,.08); color: #888; border: 1px solid rgba(180,180,180,.1); }
   .badge-lang { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid rgba(255,255,255,.08); }
   .badge-fmt  { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid rgba(255,255,255,.08); }
-
-  .card-abstract {
-    font-size: 0.85rem;
-    color: var(--muted);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-
-  .card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .card-authors {
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .card-actions {
-    display: flex;
-    gap: 8px;
-  }
-
-  .btn-sm {
-    padding: 5px 14px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-size: 0.78rem;
-    cursor: pointer;
-    font-family: 'Golos Text', sans-serif;
-    transition: all .15s;
-  }
+  .card-abstract { font-size: 0.85rem; color: var(--muted); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .card-authors { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+  .card-actions { display: flex; gap: 8px; }
+  .btn-sm { padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 0.78rem; cursor: pointer; font-family: 'Golos Text', sans-serif; transition: all .15s; }
   .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
   .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .btn-sm.primary:hover { background: #3a78ee; }
+  .btn-sm.danger { border-color: var(--accent2); color: var(--accent2); }
+  .btn-sm.danger:hover { background: var(--accent2); color: #fff; }
+  .card-keywords { font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: rgba(79,142,255,.7); margin-top: 8px; }
 
-  .card-keywords {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: rgba(79,142,255,.7);
-    margin-top: 8px;
-  }
-
-  /* ─── MODAL ─────────────────────────────────────────── */
+  /* MODAL */
   .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.7);
-    z-index: 1000;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 40px 20px;
-    overflow-y: auto;
-    backdrop-filter: blur(4px);
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    z-index: 1000; align-items: flex-start; justify-content: center;
+    padding: 40px 20px; overflow-y: auto; backdrop-filter: blur(4px);
   }
   .modal-overlay.open { display: flex; }
-
   .modal {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 720px;
-    padding: 32px;
-    position: relative;
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    width: 100%; max-width: 720px; padding: 32px; position: relative;
     animation: slideUp .25s ease;
   }
-  @keyframes slideUp {
-    from { transform: translateY(30px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .modal-close {
-    position: absolute;
-    right: 20px; top: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    width: 32px; height: 32px;
-    cursor: pointer;
-    display: grid; place-items: center;
-    color: var(--muted);
-    font-size: 1.1rem;
+    position: absolute; right: 20px; top: 20px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px;
+    cursor: pointer; display: grid; place-items: center; color: var(--muted); font-size: 1.1rem;
     transition: color .15s, border-color .15s;
   }
   .modal-close:hover { color: var(--text); border-color: var(--accent); }
-
-  .modal-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 16px;
-    line-height: 1.4;
-    padding-right: 40px;
-  }
-
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 16px; line-height: 1.4; padding-right: 40px; }
   .modal-section { margin-bottom: 20px; }
-  .modal-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    color: var(--muted);
-    margin-bottom: 6px;
-    font-weight: 600;
-  }
-  .modal-text {
-    font-size: 0.9rem;
-    line-height: 1.7;
-    color: #c8ccda;
-  }
-
-  .summary-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r);
-    padding: 16px;
-    font-size: 0.9rem;
-    line-height: 1.7;
-    color: var(--text);
-    position: relative;
-  }
-
-  .summary-box.loading {
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  .summary-loading {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    color: var(--muted);
-    font-size: 0.85rem;
-  }
+  .modal-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  .modal-text { font-size: 0.9rem; line-height: 1.7; color: #c8ccda; }
+  .summary-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; font-size: 0.9rem; line-height: 1.7; color: var(--text); }
+  .summary-box.loading { color: var(--muted); font-style: italic; }
+  .summary-loading { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 0.85rem; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1s infinite; }
   .dot:nth-child(2) { animation-delay: .2s; }
   .dot:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
 
-  /* ─── EMPTY / LOADING STATES ────────────────────────── */
-  .state-box {
-    text-align: center;
-    padding: 80px 20px;
-    color: var(--muted);
+  /* FORM INPUTS IN MODAL */
+  .form-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 10px 14px; color: var(--text);
+    font-family: 'Golos Text', sans-serif; font-size: 0.9rem; outline: none;
+    transition: border-color .2s; margin-top: 4px;
   }
+  .form-input:focus { border-color: var(--accent); }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-checkrow { display: flex; gap: 20px; flex-wrap: wrap; }
+  .form-checkrow label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.875rem; }
+  .form-checkrow input[type=checkbox] { accent-color: var(--accent); }
+  .form-error { color: var(--accent2); font-size: 0.85rem; margin-top: 4px; display: none; }
+
+  /* ADMIN PAGE */
+  .admin-page { display: none; }
+  .admin-page.active { display: block; }
+  .main-page { display: block; }
+  .main-page.hidden { display: none; }
+  .admin-header { padding: 24px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  .admin-header h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; }
+  .admin-content { padding: 32px; max-width: 800px; }
+  .admin-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+  .admin-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 20px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .admin-articles-list { max-height: 400px; overflow-y: auto; }
+  .admin-article-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .admin-article-row:last-child { border-bottom: none; }
+  .admin-article-title { font-size: 0.85rem; color: var(--text); flex: 1; line-height: 1.4; }
+  .admin-article-year { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+
+  /* STATES */
+  .state-box { text-align: center; padding: 80px 20px; color: var(--muted); }
   .state-box svg { width: 48px; height: 48px; margin-bottom: 16px; opacity: .3; }
   .state-box h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--text); }
-  .state-box p  { font-size: 0.875rem; }
+  .state-box p { font-size: 0.875rem; }
 
-  /* ─── SCROLLBAR ─────────────────────────────────────── */
+  /* LOGIN */
+  .login-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85);
+    z-index: 2000; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .login-overlay.open { display: flex; }
+  .login-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px; width: 100%; max-width: 380px;
+    animation: slideUp .25s ease;
+  }
+  .login-box h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 8px; }
+  .login-box p { font-size: 0.875rem; color: var(--muted); margin-bottom: 24px; }
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-@media print {
-  aside { display: none; }
-  header { display: none; }
-  .card-actions { display: none; }
-  .article-card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 12px; }
-  body { background: white; color: black; }
-  .card-title { color: black; }
-  .card-authors { color: #333; }
-  .badge { border: 1px solid #999; color: #333 !important; background: transparent !important; }
-}
-  
+  @media print {
+    aside { display: none !important; }
+    header { display: none !important; }
+    .card-actions { display: none !important; }
+    .article-card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 12px; }
+    body { background: white; color: black; }
+    .card-title { color: black; }
+    .card-authors { color: #333; }
+    .badge { border: 1px solid #999; color: #333 !important; background: transparent !important; }
+  }
 </style>
 </head>
-
-<!-- MODAL: ДОБАВИТЬ СТАТЬЮ -->
-<div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
-  <div class="modal" id="add-modal-body" style="max-width:600px">
-    <button class="modal-close" onclick="document.getElementById('add-modal').classList.remove('open')">✕</button>
-    <div class="modal-title">Добавить публикацию</div>
-    <div style="display:flex;flex-direction:column;gap:14px;margin-top:20px">
-      <div>
-        <div class="modal-label">Название *</div>
-        <input type="text" id="add-title" placeholder="Введите название статьи" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
-      </div>
-      <div>
-        <div class="modal-label">Авторы</div>
-        <input type="text" id="add-authors" placeholder="например: Иванов И.И.; Петров П.П." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
-      </div>
-      <div>
-        <div class="modal-label">Аннотация</div>
-        <textarea id="add-abstract" placeholder="Краткое описание статьи" rows="4" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none;resize:vertical"></textarea>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <div class="modal-label">Год</div>
-          <input type="number" id="add-year" placeholder="2024" min="1900" max="2100" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
-        </div>
-        <div>
-          <div class="modal-label">Язык</div>
-          <select id="add-lang" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <div class="modal-label">Ключевые слова</div>
-        <input type="text" id="add-keywords" placeholder="например: SQL, базы данных, нормализация" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
-      </div>
-      <div style="display:flex;gap:20px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-size:0.875rem">
-          <input type="checkbox" id="add-vak" style="accent-color:var(--accent)"> Журнал ВАК
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-size:0.875rem">
-          <input type="checkbox" id="add-open" checked style="accent-color:var(--accent)"> Открытый доступ
-        </label>
-      </div>
-      <div id="add-error" style="color:var(--accent2);font-size:0.85rem;display:none"></div>
-      <button class="apply-btn" onclick="submitArticle()">Сохранить статью</button>
-    </div>
-  </div>
-</div>
-  
 <body>
 
 <!-- HEADER -->
@@ -508,112 +248,179 @@
       <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
     </button>
   </div>
+  <button class="header-admin-btn" onclick="openLogin()">🔐 Администратор</button>
 </header>
 
-<!-- LAYOUT -->
-<div class="layout">
+<!-- MAIN PAGE -->
+<div class="main-page" id="main-page">
+  <div class="layout">
+    <aside>
+      <div class="filter-group">
+        <h4>Авторитетность</h4>
+        <label><input type="checkbox" id="f-vak"> Журнал ВАК</label>
+        <label><input type="checkbox" id="f-scopus"> Scopus</label>
+        <label><input type="checkbox" id="f-open"> Открытый доступ</label>
+        <label><input type="checkbox" id="f-formulas"> Содержит формулы LaTeX</label>
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Квартиль журнала</h4>
+        <select id="f-quartile">
+          <option value="">Любой</option>
+          <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+        </select>
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Год публикации</h4>
+        <div class="year-range">
+          <input type="number" id="f-year-from" placeholder="От" min="1900" max="2100">
+          <input type="number" id="f-year-to" placeholder="До" min="1900" max="2100">
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Ключевое слово</h4>
+        <input type="text" id="f-keyword" placeholder="например: RSA, SQL…">
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Автор</h4>
+        <input type="text" id="f-author" placeholder="например: Иванов И.И.">
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Язык публикации</h4>
+        <select id="f-lang">
+          <option value="">Любой</option>
+          <option value="ru">Русский</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Формат документа</h4>
+        <select id="f-format">
+          <option value="">Любой</option>
+          <option value="pdf">PDF</option>
+          <option value="docx">DOCX</option>
+          <option value="tex">LaTeX / TeX</option>
+        </select>
+      </div>
+      <hr class="divider">
+      <div class="filter-group">
+        <h4>Рейтинг автора (мин.)</h4>
+        <select id="f-rating">
+          <option value="">Любой</option>
+          <option value="4.5">4.5+</option>
+          <option value="4.0">4.0+</option>
+          <option value="3.5">3.5+</option>
+          <option value="3.0">3.0+</option>
+        </select>
+      </div>
+      <button class="apply-btn" onclick="applyFilters()">Применить фильтры</button>
+      <button class="apply-btn secondary" onclick="resetFilters()">Сбросить</button>
+      <button class="apply-btn secondary" onclick="window.print()">🖨 Распечатать</button>
+    </aside>
 
-  <!-- SIDEBAR: ФИЛЬТРЫ -->
-  <aside>
-    <div class="filter-group">
-      <h4>Авторитетность</h4>
-      <label><input type="checkbox" id="f-vak"> Журнал ВАК</label>
-      <label><input type="checkbox" id="f-scopus"> Scopus</label>
-      <label><input type="checkbox" id="f-open"> Открытый доступ</label>
-      <label><input type="checkbox" id="f-formulas"> Содержит формулы LaTeX</label>
-    </div>
+    <main>
+      <div class="results-header">
+        <div class="results-count" id="results-count">Загрузка…</div>
+      </div>
+      <div id="results-container">
+        <div class="state-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
+          </svg>
+          <h3>Загружаем публикации…</h3>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
 
-    <hr class="divider">
+<!-- ADMIN PAGE -->
+<div class="admin-page" id="admin-page">
+  <div class="admin-header">
+    <button class="btn-sm" onclick="closeAdmin()">← Назад</button>
+    <h2>Панель администратора</h2>
+    <span style="margin-left:auto;font-size:0.8rem;color:var(--green)">● Вы вошли как администратор</span>
+  </div>
+  <div class="admin-content">
 
-    <div class="filter-group">
-      <h4>Квартиль журнала</h4>
-      <select id="f-quartile">
-        <option value="">Любой</option>
-        <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
-      </select>
-    </div>
-
-    <hr class="divider">
-
-    <div class="filter-group">
-      <h4>Год публикации</h4>
-      <div class="year-range">
-        <input type="number" id="f-year-from" placeholder="От" min="1900" max="2100">
-        <input type="number" id="f-year-to"   placeholder="До" min="1900" max="2100">
+    <!-- Добавить статью -->
+    <div class="admin-card">
+      <h3>➕ Добавить публикацию</h3>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div class="modal-label">Название *</div>
+          <input type="text" id="add-title" class="form-input" placeholder="Введите полное название статьи">
+        </div>
+        <div>
+          <div class="modal-label">Авторы</div>
+          <input type="text" id="add-authors" class="form-input" placeholder="Иванов И.И.; Петров П.П.">
+        </div>
+        <div>
+          <div class="modal-label">Аннотация</div>
+          <textarea id="add-abstract" class="form-input" rows="4" placeholder="Краткое описание содержания статьи" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-grid-2">
+          <div>
+            <div class="modal-label">Год публикации</div>
+            <input type="number" id="add-year" class="form-input" placeholder="2024" min="1900" max="2100">
+          </div>
+          <div>
+            <div class="modal-label">Язык</div>
+            <select id="add-lang" class="form-input">
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div class="modal-label">Ключевые слова (через запятую)</div>
+          <input type="text" id="add-keywords" class="form-input" placeholder="SQL, базы данных, нормализация">
+        </div>
+        <div class="form-checkrow">
+          <label><input type="checkbox" id="add-vak"> Журнал ВАК</label>
+          <label><input type="checkbox" id="add-scopus"> Scopus</label>
+          <label><input type="checkbox" id="add-open" checked> Открытый доступ</label>
+          <label><input type="checkbox" id="add-formulas"> Содержит формулы</label>
+        </div>
+        <div id="add-error" class="form-error"></div>
+        <button class="apply-btn" onclick="submitArticle()" style="max-width:200px">💾 Сохранить статью</button>
       </div>
     </div>
 
-    <hr class="divider">
-
-    <div class="filter-group">
-      <h4>Ключевое слово</h4>
-      <input type="text" id="f-keyword" placeholder="например: RSA, SQL…">
-    </div>
-
-    <hr class="divider">
-
-    <div class="filter-group">
-      <h4>Автор</h4>
-      <input type="text" id="f-author" placeholder="например: Иванов И.И.">
-    </div>
-
-    <hr class="divider">
-
-    <div class="filter-group">
-      <h4>Язык публикации</h4>
-      <select id="f-lang">
-        <option value="">Любой</option>
-        <option value="ru">Русский</option>
-        <option value="en">English</option>
-      </select>
-    </div>
-
-    <hr class="divider">
-
-    <div class="filter-group">
-      <h4>Формат документа</h4>
-      <select id="f-format">
-        <option value="">Любой</option>
-        <option value="pdf">PDF</option>
-        <option value="docx">DOCX</option>
-        <option value="tex">LaTeX / TeX</option>
-      </select>
-    </div>
-
-    <hr class="divider">
-
-    <div class="filter-group">
-      <h4>Рейтинг автора (мин.)</h4>
-      <select id="f-rating">
-        <option value="">Любой</option>
-        <option value="4.5">4.5+</option>
-        <option value="4.0">4.0+</option>
-        <option value="3.5">3.5+</option>
-        <option value="3.0">3.0+</option>
-      </select>
-    </div>
-
-    <button class="apply-btn" onclick="applyFilters()">Применить фильтры</button>
-    <button class="apply-btn" style="background:transparent;border:1px solid var(--border);color:var(--muted)" onclick="resetFilters()">Сбросить</button>
-    <button class="apply-btn" style="background:transparent;border:1px solid var(--border);color:var(--muted)" onclick="window.print()">🖨 Распечатать</button>
-    <button class="apply-btn" id="btn-add-article" style="background:transparent;border:1px solid var(--border);color:var(--muted);display:none" onclick="openAddModal()">+ Добавить статью</button>
-    <button class="apply-btn" style="background:transparent;border:1px solid var(--border);color:var(--muted)" onclick="toggleAdmin()">🔐 Режим администратора</button>
-  </aside>
-
-  <!-- MAIN: РЕЗУЛЬТАТЫ -->
-  <main>
-    <div class="results-header">
-      <div class="results-count" id="results-count">Загрузка…</div>
-    </div>
-    <div id="results-container">
-      <div class="state-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>
-        </svg>
-        <h3>Загружаем публикации…</h3>
+    <!-- Список статей для удаления -->
+    <div class="admin-card">
+      <h3>📋 Управление публикациями <span id="admin-count" style="font-size:0.8rem;color:var(--muted);font-weight:400"></span></h3>
+      <div style="margin-bottom:12px">
+        <input type="text" id="admin-search" class="form-input" placeholder="Поиск по названию…" oninput="filterAdminList()" style="max-width:400px">
+      </div>
+      <div class="admin-articles-list" id="admin-articles-list">
+        <div style="color:var(--muted);font-size:0.875rem">Загрузка списка…</div>
       </div>
     </div>
-  </main>
+
+  </div>
+</div>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <h2>🔐 Вход для администратора</h2>
+    <p>Введите пароль для доступа к панели управления</p>
+    <div>
+      <div class="modal-label">Пароль</div>
+      <input type="password" id="login-pwd" class="form-input" placeholder="Введите пароль" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-error" style="color:var(--accent2);font-size:0.85rem;margin-top:8px;display:none">Неверный пароль</div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="apply-btn" onclick="doLogin()" style="flex:1">Войти</button>
+      <button class="apply-btn secondary" onclick="document.getElementById('login-overlay').classList.remove('open')" style="flex:1">Отмена</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL: ДЕТАЛИ СТАТЬИ -->
@@ -625,225 +432,108 @@
 </div>
 
 <script>
-// ── Конфигурация ──────────────────────────────────────────
 const API = 'https://web-production-89c45.up.railway.app/api';
+const ADMIN_PASSWORD = 'admin2025';
+let isAdmin = false;
+let allAdminArticles = [];
 
-// ── Демо-данные (когда бэкенд недоступен) ─────────────────
 const DEMO_ARTICLES = [
-  {
-    id: 1,
-    title: 'Методы оптимизации запросов в реляционных СУБД',
-    abstract: 'В статье рассматриваются алгоритмы оптимизации SQL-запросов с использованием индексов B-tree и Hash. Анализируются планы выполнения запросов в PostgreSQL и MySQL.',
-    year: 2023,
-    journal_name: 'Программная инженерия',
-    is_vak: true, is_scopus: false, quartile: 'Q3',
-    impact_factor: 0.89,
-    file_format: 'pdf', language: 'ru',
-    has_formulas: false, is_open_access: true,
-    authors: 'Иванов Иван Иванович (д.т.н.); Петрова Анна Сергеевна (к.т.н.)',
-    keywords: 'SQL, нормализация, индексирование',
-    areas: 'Базы данных',
-    doi: '10.1234/db.2023.001',
-  },
-  {
-    id: 2,
-    title: 'Применение RSA-шифрования в распределённых системах',
-    abstract: 'Анализируется применение асимметричного шифрования RSA в микросервисных архитектурах. Рассматривается использование формулы C = Mᵉ mod n для защиты API-эндпоинтов.',
-    year: 2022,
-    journal_name: 'Проблемы информационной безопасности',
-    is_vak: true, is_scopus: true, quartile: 'Q2',
-    impact_factor: 1.23,
-    file_format: 'pdf', language: 'ru',
-    has_formulas: true, is_open_access: true,
-    authors: 'Иванов Иван Иванович (д.т.н.)',
-    keywords: 'шифрование, RSA',
-    areas: 'Информационная безопасность, Криптография',
-    doi: '10.5678/sec.2022.042',
-  },
-  {
-    id: 3,
-    title: 'Deep Learning for Database Query Optimization',
-    abstract: 'We propose a neural network approach to predict optimal query execution plans in relational DBMS. Our method outperforms traditional cost-based optimizers by 34% on TPC-H benchmarks.',
-    year: 2024,
-    journal_name: 'Journal of Database Management',
-    is_vak: false, is_scopus: true, quartile: 'Q1',
-    impact_factor: 2.45,
-    file_format: 'pdf', language: 'en',
-    has_formulas: false, is_open_access: false,
-    authors: 'Smith John (PhD)',
-    keywords: 'машинное обучение, нейронные сети',
-    areas: 'Базы данных, Машинное обучение',
-    doi: '10.9999/jdm.2024.007',
-  }
+  { id: 1, title: 'Методы оптимизации запросов в реляционных СУБД', abstract: 'В статье рассматриваются алгоритмы оптимизации SQL-запросов с использованием индексов B-tree и Hash.', year: 2023, journal_name: 'Программная инженерия', is_vak: true, is_scopus: false, quartile: 'Q3', impact_factor: 0.89, file_format: 'pdf', language: 'ru', has_formulas: false, is_open_access: true, authors: 'Иванов Иван Иванович (д.т.н.); Петрова Анна Сергеевна (к.т.н.)', keywords: 'SQL, нормализация, индексирование', areas: 'Базы данных', doi: '10.1234/db.2023.001' },
+  { id: 2, title: 'Применение RSA-шифрования в распределённых системах', abstract: 'Анализируется применение асимметричного шифрования RSA в микросервисных архитектурах.', year: 2022, journal_name: 'Проблемы информационной безопасности', is_vak: true, is_scopus: true, quartile: 'Q2', impact_factor: 1.23, file_format: 'pdf', language: 'ru', has_formulas: true, is_open_access: true, authors: 'Иванов Иван Иванович (д.т.н.)', keywords: 'шифрование, RSA', areas: 'Информационная безопасность', doi: '10.5678/sec.2022.042' },
+  { id: 3, title: 'Deep Learning for Database Query Optimization', abstract: 'We propose a neural network approach to predict optimal query execution plans.', year: 2024, journal_name: 'Journal of Database Management', is_vak: false, is_scopus: true, quartile: 'Q1', impact_factor: 2.45, file_format: 'pdf', language: 'en', has_formulas: false, is_open_access: false, authors: 'Smith John (PhD)', keywords: 'машинное обучение, нейронные сети', areas: 'Базы данных', doi: '10.9999/jdm.2024.007' }
 ];
 
-let allArticles = [];
 let useDemoData = false;
 
-// ── Загрузка данных ───────────────────────────────────────
-async function loadArticles(params = {}) {
-  const qs = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => { if (v !== '' && v !== null && v !== undefined) qs.append(k, v); });
-  
-  try {
-    const res = await fetch(`${API}/articles?${qs}`, { signal: AbortSignal.timeout(3000) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    useDemoData = false;
-    return await res.json();
-  } catch {
-    useDemoData = true;
-    return filterDemoData(params);
+// ── Авторизация ───────────────────────────────────────────
+function openLogin() {
+  document.getElementById('login-overlay').classList.add('open');
+  document.getElementById('login-pwd').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  setTimeout(() => document.getElementById('login-pwd').focus(), 100);
+}
+
+function doLogin() {
+  const pwd = document.getElementById('login-pwd').value;
+  if (pwd === ADMIN_PASSWORD) {
+    isAdmin = true;
+    document.getElementById('login-overlay').classList.remove('open');
+    openAdmin();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pwd').value = '';
+    document.getElementById('login-pwd').focus();
   }
 }
 
-function filterDemoData(params) {
-  return DEMO_ARTICLES.filter(a => {
-    if (params.is_vak === 'true'    && !a.is_vak)         return false;
-    if (params.is_scopus === 'true' && !a.is_scopus)      return false;
-    if (params.is_open_access === 'true' && !a.is_open_access) return false;
-    if (params.has_formulas === 'true' && !a.has_formulas) return false;
-    if (params.quartile && a.quartile !== params.quartile) return false;
-    if (params.language && a.language !== params.language) return false;
-    if (params.file_format && a.file_format !== params.file_format) return false;
-    if (params.search) {
-      const q = params.search.toLowerCase();
-      if (!a.title.toLowerCase().includes(q) && !a.abstract.toLowerCase().includes(q)) return false;
-    }
-    if (params.keyword) {
-      const q = params.keyword.toLowerCase();
-      if (!a.keywords.toLowerCase().includes(q)) return false;
-    }
-    return true;
-  });
+function openAdmin() {
+  document.getElementById('main-page').classList.add('hidden');
+  document.getElementById('admin-page').classList.add('active');
+  loadAdminArticles();
 }
 
-// ── Рендер карточки ───────────────────────────────────────
-function quartileBadge(q) {
-  if (!q) return '';
-  return `<span class="badge badge-${q.toLowerCase()}">${q}</span>`;
+function closeAdmin() {
+  document.getElementById('admin-page').classList.remove('active');
+  document.getElementById('main-page').classList.remove('hidden');
+  applyFilters();
 }
 
-function renderCard(a) {
-  const badges = [
-    a.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
-    a.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
-    a.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
-    a.has_formulas   ? '<span class="badge badge-formula">∑ Формулы</span>' : '',
-    quartileBadge(a.quartile),
-    a.language  ? `<span class="badge badge-lang">${a.language.toUpperCase()}</span>` : '',
-    a.file_format ? `<span class="badge badge-fmt">.${a.file_format}</span>` : '',
-  ].filter(Boolean).join('');
-
-  return `
-    <div class="article-card" onclick="openModal(${a.id})">
-      <div class="card-title">${a.title}</div>
-      <div class="card-meta">${badges}</div>
-      ${a.abstract ? `<div class="card-abstract">${a.abstract}</div>` : ''}
-      <div class="card-footer">
-        <div>
-          <div class="card-authors">${a.authors || '—'} · ${a.year || '?'} · ${a.journal_name || 'Журнал не указан'}</div>
-          ${a.keywords ? `<div class="card-keywords"># ${a.keywords}</div>` : ''}
-        </div>
-        <div class="card-actions">
-          ${a.doi ? `<button class="btn-sm" onclick="openDOI(event,'${a.doi}')">🔗 Источник</button>` : ''}
-          ${a.file_url && a.file_url.startsWith('https://drive') ? `<button class="btn-sm" onclick="downloadPDF(event,'${a.file_url}')">⬇ Скачать PDF</button>` : ''}
-          <button class="btn-sm primary" onclick="openModal(${a.id}); event.stopPropagation()">Подробнее</button>
-        </div>
-      </div>
-    </div>
-  `;
+// ── Загрузка статей для админки ───────────────────────────
+async function loadAdminArticles() {
+  const list = document.getElementById('admin-articles-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:0.875rem">Загрузка…</div>';
+  try {
+    const res = await fetch(`${API}/articles`);
+    allAdminArticles = await res.json();
+    document.getElementById('admin-count').textContent = `(${allAdminArticles.length} публикаций)`;
+    renderAdminList(allAdminArticles);
+  } catch {
+    list.innerHTML = '<div style="color:var(--accent2);font-size:0.875rem">Ошибка загрузки</div>';
+  }
 }
 
-function openDOI(event, doi) {
-  event.stopPropagation();
-  window.open('https://doi.org/' + doi, '_blank');
+function filterAdminList() {
+  const q = document.getElementById('admin-search').value.toLowerCase();
+  const filtered = allAdminArticles.filter(a => a.title.toLowerCase().includes(q));
+  renderAdminList(filtered);
 }
 
-// ── Рендер результатов ────────────────────────────────────
-function renderResults(articles) {
-  const container = document.getElementById('results-container');
-  const countEl = document.getElementById('results-count');
-
-  if (articles.length === 0) {
-    container.innerHTML = `
-      <div class="state-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <h3>Ничего не найдено</h3>
-        <p>Попробуйте изменить поисковый запрос или снять некоторые фильтры</p>
-      </div>`;
-    countEl.innerHTML = 'Найдено: <strong>0</strong>';
+function renderAdminList(articles) {
+  const list = document.getElementById('admin-articles-list');
+  if (!articles.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:0.875rem;padding:12px 0">Ничего не найдено</div>';
     return;
   }
-
-  const note = useDemoData ? ' <span style="color:var(--accent2);font-size:.8em">(демо-режим)</span>' : '';
-  countEl.innerHTML = `Найдено: <strong>${articles.length}</strong> публикаций${note}`;
-  container.innerHTML = articles.map(renderCard).join('');
+  list.innerHTML = articles.map(a => `
+    <div class="admin-article-row">
+      <div class="admin-article-title">${a.title}</div>
+      <span class="admin-article-year">${a.year || '—'}</span>
+      <button class="btn-sm danger" onclick="deleteArticle(${a.id}, this)">🗑 Удалить</button>
+    </div>
+  `).join('');
 }
 
-function toggleAdmin() {
-  const pwd = prompt('Введите пароль администратора:');
-  if (pwd === 'admin2025') {
-    document.getElementById('btn-add-article').style.display = 'block';
-    alert('Режим администратора активирован');
-  } else if (pwd !== null) {
-    alert('Неверный пароль');
-  }
-}
-  
-// ── Применить фильтры ─────────────────────────────────────
-async function applyFilters() {
-  const params = {
-    search:          document.getElementById('main-search').value.trim(),
-    keyword:         document.getElementById('f-keyword').value.trim(),
-    author:          document.getElementById('f-author').value.trim(),
-    is_vak:          document.getElementById('f-vak').checked || '',
-    is_scopus:       document.getElementById('f-scopus').checked || '',
-    is_open_access:  document.getElementById('f-open').checked || '',
-    has_formulas:    document.getElementById('f-formulas').checked || '',
-    quartile:        document.getElementById('f-quartile').value,
-    year_from:       document.getElementById('f-year-from').value,
-    year_to:         document.getElementById('f-year-to').value,
-    language:        document.getElementById('f-lang').value,
-    file_format:     document.getElementById('f-format').value,
-    min_author_rating: document.getElementById('f-rating').value,
-  };
-
-  document.getElementById('results-count').innerHTML = 'Поиск…';
-  document.getElementById('results-container').innerHTML = `
-    <div class="state-box">
-      <div class="summary-loading" style="justify-content:center">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        <span style="margin-left:8px">Загрузка результатов…</span>
-      </div>
-    </div>`;
-
-  const articles = await loadArticles(params);
-  renderResults(articles);
-}
-
-function resetFilters() {
-  document.getElementById('main-search').value = '';
-  document.getElementById('f-keyword').value = '';
-  document.getElementById('f-author').value = '';
-  ['f-vak','f-scopus','f-open','f-formulas'].forEach(id => document.getElementById(id).checked = false);
-  ['f-quartile','f-lang','f-format','f-rating'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f-year-from').value = '';
-  document.getElementById('f-year-to').value = '';
-  function openAddModal() {
-  document.getElementById('add-modal').classList.add('open');
-}
-function closeAddModal(event) {
-  if (event.target === document.getElementById('add-modal')) {
-    document.getElementById('add-modal').classList.remove('open');
+async function deleteArticle(id, btn) {
+  if (!confirm('Удалить эту публикацию? Действие нельзя отменить.')) return;
+  btn.disabled = true;
+  btn.textContent = '…';
+  try {
+    const res = await fetch(`${API}/articles/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error();
+    allAdminArticles = allAdminArticles.filter(a => a.id !== id);
+    document.getElementById('admin-count').textContent = `(${allAdminArticles.length} публикаций)`;
+    filterAdminList();
+  } catch {
+    btn.disabled = false;
+    btn.textContent = '🗑 Удалить';
+    alert('Ошибка при удалении');
   }
 }
 
+// ── Добавление статьи ─────────────────────────────────────
 async function submitArticle() {
   const title = document.getElementById('add-title').value.trim();
   const errorEl = document.getElementById('add-error');
-
   if (!title) {
     errorEl.textContent = 'Название обязательно для заполнения';
     errorEl.style.display = 'block';
@@ -859,32 +549,144 @@ async function submitArticle() {
     language: document.getElementById('add-lang').value,
     keywords: document.getElementById('add-keywords').value.trim(),
     is_vak: document.getElementById('add-vak').checked,
+    is_scopus: document.getElementById('add-scopus').checked,
     is_open_access: document.getElementById('add-open').checked,
+    has_formulas: document.getElementById('add-formulas').checked,
   };
 
   try {
     const res = await fetch(`${API}/articles/add`, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if (!res.ok) throw new Error('Ошибка сервера');
-    document.getElementById('add-modal').classList.remove('open');
-    // Очищаем форму
+    if (!res.ok) throw new Error();
     ['add-title','add-authors','add-abstract','add-year','add-keywords'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('add-vak').checked = false;
+    document.getElementById('add-scopus').checked = false;
     document.getElementById('add-open').checked = true;
-    applyFilters();
-    alert('Статья успешно добавлена!');
-  } catch(e) {
-    errorEl.textContent = 'Ошибка при сохранении. Попробуйте снова.';
+    document.getElementById('add-formulas').checked = false;
+    loadAdminArticles();
+    alert('✅ Статья успешно добавлена!');
+  } catch {
+    errorEl.textContent = 'Ошибка при сохранении. Проверьте подключение к серверу.';
     errorEl.style.display = 'block';
   }
 }
+
+// ── Загрузка данных ───────────────────────────────────────
+async function loadArticles(params = {}) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => { if (v !== '' && v !== null && v !== undefined) qs.append(k, v); });
+  try {
+    const res = await fetch(`${API}/articles?${qs}`, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    useDemoData = false;
+    return await res.json();
+  } catch {
+    useDemoData = true;
+    return filterDemoData(params);
+  }
+}
+
+function filterDemoData(params) {
+  return DEMO_ARTICLES.filter(a => {
+    if (params.is_vak === 'true' && !a.is_vak) return false;
+    if (params.is_scopus === 'true' && !a.is_scopus) return false;
+    if (params.is_open_access === 'true' && !a.is_open_access) return false;
+    if (params.has_formulas === 'true' && !a.has_formulas) return false;
+    if (params.quartile && a.quartile !== params.quartile) return false;
+    if (params.language && a.language !== params.language) return false;
+    if (params.file_format && a.file_format !== params.file_format) return false;
+    if (params.search) { const q = params.search.toLowerCase(); if (!a.title.toLowerCase().includes(q) && !(a.abstract||'').toLowerCase().includes(q)) return false; }
+    if (params.keyword) { const q = params.keyword.toLowerCase(); if (!(a.keywords||'').toLowerCase().includes(q)) return false; }
+    return true;
+  });
+}
+
+// ── Карточки ─────────────────────────────────────────────
+function quartileBadge(q) {
+  if (!q) return '';
+  return `<span class="badge badge-${q.toLowerCase()}">${q}</span>`;
+}
+
+function renderCard(a) {
+  const badges = [
+    a.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
+    a.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
+    a.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
+    a.has_formulas ? '<span class="badge badge-formula">∑ Формулы</span>' : '',
+    quartileBadge(a.quartile),
+    a.language ? `<span class="badge badge-lang">${a.language.toUpperCase()}</span>` : '',
+    a.file_format ? `<span class="badge badge-fmt">.${a.file_format}</span>` : '',
+  ].filter(Boolean).join('');
+
+  return `
+    <div class="article-card" onclick="openModal(${a.id})">
+      <div class="card-title">${a.title}</div>
+      <div class="card-meta">${badges}</div>
+      ${a.abstract ? `<div class="card-abstract">${a.abstract}</div>` : ''}
+      <div class="card-footer">
+        <div>
+          <div class="card-authors">${a.authors || '—'} · ${a.year || '?'} · ${a.journal_name || 'Журнал не указан'}</div>
+          ${a.keywords ? `<div class="card-keywords"># ${a.keywords}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          ${a.doi ? `<button class="btn-sm" onclick="event.stopPropagation();window.open('https://doi.org/${a.doi}','_blank')">🔗 Источник</button>` : ''}
+          ${a.file_url && a.file_url.startsWith('https://drive') ? `<button class="btn-sm" onclick="event.stopPropagation();window.open('${a.file_url}','_blank')">⬇ Скачать PDF</button>` : ''}
+          <button class="btn-sm primary" onclick="openModal(${a.id}); event.stopPropagation()">Подробнее</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderResults(articles) {
+  const container = document.getElementById('results-container');
+  const countEl = document.getElementById('results-count');
+  if (articles.length === 0) {
+    container.innerHTML = `<div class="state-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><h3>Ничего не найдено</h3><p>Попробуйте изменить поисковый запрос или снять некоторые фильтры</p></div>`;
+    countEl.innerHTML = 'Найдено: <strong>0</strong>';
+    return;
+  }
+  const note = useDemoData ? ' <span style="color:var(--accent2);font-size:.8em">(демо-режим)</span>' : '';
+  countEl.innerHTML = `Найдено: <strong>${articles.length}</strong> публикаций${note}`;
+  container.innerHTML = articles.map(renderCard).join('');
+}
+
+async function applyFilters() {
+  const params = {
+    search: document.getElementById('main-search').value.trim(),
+    keyword: document.getElementById('f-keyword').value.trim(),
+    author: document.getElementById('f-author').value.trim(),
+    is_vak: document.getElementById('f-vak').checked || '',
+    is_scopus: document.getElementById('f-scopus').checked || '',
+    is_open_access: document.getElementById('f-open').checked || '',
+    has_formulas: document.getElementById('f-formulas').checked || '',
+    quartile: document.getElementById('f-quartile').value,
+    year_from: document.getElementById('f-year-from').value,
+    year_to: document.getElementById('f-year-to').value,
+    language: document.getElementById('f-lang').value,
+    file_format: document.getElementById('f-format').value,
+    min_author_rating: document.getElementById('f-rating').value,
+  };
+  document.getElementById('results-count').innerHTML = 'Поиск…';
+  document.getElementById('results-container').innerHTML = `<div class="state-box"><div class="summary-loading" style="justify-content:center"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:8px">Загрузка результатов…</span></div></div>`;
+  const articles = await loadArticles(params);
+  renderResults(articles);
+}
+
+function resetFilters() {
+  document.getElementById('main-search').value = '';
+  document.getElementById('f-keyword').value = '';
+  document.getElementById('f-author').value = '';
+  ['f-vak','f-scopus','f-open','f-formulas'].forEach(id => document.getElementById(id).checked = false);
+  ['f-quartile','f-lang','f-format','f-rating'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-year-from').value = '';
+  document.getElementById('f-year-to').value = '';
   applyFilters();
 }
 
-// ── Модальное окно ────────────────────────────────────────
+// ── Модальное окно статьи ─────────────────────────────────
 async function openModal(id) {
   let article;
   if (useDemoData) {
@@ -903,54 +705,29 @@ async function openModal(id) {
     article.is_vak    ? '<span class="badge badge-vak">★ ВАК</span>' : '',
     article.is_scopus ? '<span class="badge badge-scopus">◈ Scopus</span>' : '',
     article.is_open_access ? '<span class="badge badge-open">⬡ Откр. доступ</span>' : '',
-    article.has_formulas   ? '<span class="badge badge-formula">∑ Формулы LaTeX</span>' : '',
+    article.has_formulas ? '<span class="badge badge-formula">∑ Формулы LaTeX</span>' : '',
     quartileBadge(article.quartile),
   ].filter(Boolean).join('');
 
   document.getElementById('modal-content').innerHTML = `
     <div class="card-meta" style="margin-bottom:12px">${badges}</div>
     <div class="modal-title">${article.title}</div>
-
-    ${article.abstract ? `
-    <div class="modal-section">
-      <div class="modal-label">Описание</div>
-      <div class="modal-text">${article.abstract}</div>
-    </div>` : ''}
-
-    <div class="modal-section">
-      <div class="modal-label">Авторы</div>
-      <div class="modal-text">${article.authors || '—'}</div>
-    </div>
-
-    <div class="modal-section">
-      <div class="modal-label">Журнал · Год · IF</div>
-      <div class="modal-text">
-        ${article.journal_name || '—'} · ${article.year || '?'}
-        ${article.impact_factor ? ` · IF: ${article.impact_factor}` : ''}
-      </div>
-    </div>
-
-    <div class="modal-section">
-      <div class="modal-label">Предметные области</div>
-      <div class="modal-text">${article.areas || '—'}</div>
-    </div>
-
-    <div class="modal-section">
-      <div class="modal-label">Ключевые слова</div>
-      <div class="modal-text" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:rgba(79,142,255,.8)">${article.keywords || '—'}</div>
-    </div>
-
+    ${article.abstract ? `<div class="modal-section"><div class="modal-label">Описание</div><div class="modal-text">${article.abstract}</div></div>` : ''}
+    <div class="modal-section"><div class="modal-label">Авторы</div><div class="modal-text">${article.authors || '—'}</div></div>
+    <div class="modal-section"><div class="modal-label">Журнал · Год · IF</div><div class="modal-text">${article.journal_name || '—'} · ${article.year || '?'}${article.impact_factor ? ` · IF: ${article.impact_factor}` : ''}</div></div>
+    <div class="modal-section"><div class="modal-label">Предметные области</div><div class="modal-text">${article.areas || '—'}</div></div>
+    <div class="modal-section"><div class="modal-label">Ключевые слова</div><div class="modal-text" style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:rgba(79,142,255,.8)">${article.keywords || '—'}</div></div>
     <div class="modal-section">
       <div class="modal-label" style="display:flex;justify-content:space-between;align-items:center">
         <span>AI-пересказ</span>
         <button class="btn-sm" onclick="generateSummary(${article.id})" id="summary-btn">Сгенерировать</button>
       </div>
-      <div class="summary-box loading" id="summary-box">
-        Нажмите «Сгенерировать» для получения краткого пересказа через нейросеть
-      </div>
+      <div class="summary-box loading" id="summary-box">Нажмите «Сгенерировать» для получения краткого пересказа через нейросеть</div>
     </div>
-
-  `;
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      ${article.doi ? `<a href="https://doi.org/${article.doi}" target="_blank" class="btn-sm" style="text-decoration:none">🔗 Открыть источник</a>` : ''}
+      ${article.file_url && article.file_url.startsWith('https://drive') ? `<a href="${article.file_url}" target="_blank" class="btn-sm" style="text-decoration:none;border-color:#3dd68c;color:#3dd68c">⬇ Скачать PDF</a>` : ''}
+    </div>`;
 
   document.getElementById('modal').classList.add('open');
 }
@@ -961,42 +738,28 @@ async function generateSummary(articleId) {
   btn.disabled = true;
   box.innerHTML = `<div class="summary-loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span style="margin-left:8px">Нейросеть анализирует текст…</span></div>`;
   box.classList.add('loading');
-
   try {
     const res = await fetch(`${API}/articles/${articleId}/summary?language=ru`, { signal: AbortSignal.timeout(30000) });
     const data = await res.json();
     box.innerHTML = data.summary_text;
     box.classList.remove('loading');
   } catch {
-    // Демо-пересказ
     await new Promise(r => setTimeout(r, 1500));
-    box.innerHTML = 'Статья посвящена анализу современных подходов в исследуемой области. Авторы предлагают оригинальный метод, демонстрирующий улучшение ключевых показателей по сравнению с существующими решениями. Результаты подтверждены экспериментально на реальных наборах данных.';
+    box.innerHTML = 'Статья посвящена анализу современных подходов в исследуемой области. Авторы предлагают оригинальный метод, демонстрирующий улучшение ключевых показателей. Результаты подтверждены экспериментально на реальных наборах данных.';
     box.classList.remove('loading');
   }
   btn.textContent = 'Обновить';
   btn.disabled = false;
 }
 
-function downloadPDF(event, url) {
-  event.stopPropagation();
-  window.open(url, '_blank');
-}
-  
 function closeModal(event) {
-  if (event.target === document.getElementById('modal')) {
-    document.getElementById('modal').classList.remove('open');
-  }
+  if (event.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open');
 }
 function closeModalDirect() {
   document.getElementById('modal').classList.remove('open');
 }
 
-// Enter в поиске
-document.getElementById('main-search').addEventListener('keydown', e => {
-  if (e.key === 'Enter') applyFilters();
-});
-
-// Инициализация
+document.getElementById('main-search').addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(); });
 applyFilters();
 </script>
 </body>
