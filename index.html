@@ -433,6 +433,18 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+@media print {
+  aside { display: none; }
+  header { display: none; }
+  .card-actions { display: none; }
+  .article-card { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 12px; }
+  body { background: white; color: black; }
+  .card-title { color: black; }
+  .card-authors { color: #333; }
+  .badge { border: 1px solid #999; color: #333 !important; background: transparent !important; }
+}
+  
 </style>
 </head>
 <body>
