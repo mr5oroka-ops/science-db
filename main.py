@@ -428,6 +428,73 @@ def top_authors(db=Depends(get_db)):
 
 from fastapi.responses import HTMLResponse, FileResponse
 
+class ArticleCreate(BaseModel):
+    title: str
+    authors: Optional[str] = None
+    abstract: Optional[str] = None
+    year: Optional[int] = None
+    language: Optional[str] = "ru"
+    keywords: Optional[str] = None
+    is_vak: Optional[bool] = False
+    is_scopus: Optional[bool] = False
+    is_open_access: Optional[bool] = True
+    has_formulas: Optional[bool] = False
+
+@app.post("/api/articles/add")
+def add_article(data: ArticleCreate, db=Depends(get_db)):
+    with db.cursor() as cur:
+        # Находим или создаём журнал "Кафедральные публикации"
+        cur.execute("SELECT id FROM journals WHERE name = 'Кафедральные публикации' LIMIT 1")
+        j = cur.fetchone()
+        journal_id = j['id'] if j else None
+
+        cur.execute("""
+            INSERT INTO articles (title, abstract, year, journal_id, language, file_format, is_open_access, has_formulas)
+            VALUES (%s, %s, %s, %s, %s, 'pdf', %s, %s) RETURNING id
+        """, (data.title, data.abstract, data.year, journal_id, data.language, data.is_open_access, data.has_formulas))
+        article_id = cur.fetchone()['id']
+
+        # Добавляем авторов
+        if data.authors:
+            for i, name in enumerate(data.authors.split(';')):
+                name = name.strip()
+                if not name: continue
+                cur.execute("SELECT id FROM authors WHERE full_name = %s LIMIT 1", (name,))
+                a = cur.fetchone()
+                if a:
+                    author_id = a['id']
+                else:
+                    cur.execute("INSERT INTO authors (full_name, country_id) VALUES (%s, 1) RETURNING id", (name,))
+                    author_id = cur.fetchone()['id']
+                cur.execute("INSERT INTO article_authors (article_id, author_id, author_order) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING", (article_id, author_id, i+1))
+
+        # Добавляем ключевые слова
+        if data.keywords:
+            for word in data.keywords.split(','):
+                word = word.strip().lower()
+                if not word: continue
+                cur.execute("SELECT id FROM keywords WHERE word = %s LIMIT 1", (word,))
+                k = cur.fetchone()
+                if k:
+                    kw_id = k['id']
+                else:
+                    cur.execute("INSERT INTO keywords (word) VALUES (%s) RETURNING id", (word,))
+                    kw_id = cur.fetchone()['id']
+                cur.execute("INSERT INTO article_keywords (article_id, keyword_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (article_id, kw_id))
+
+        db.commit()
+    return {"status": "ok", "id": article_id}
+
+@app.delete("/api/articles/{article_id}")
+def delete_article(article_id: int, db=Depends(get_db)):
+    with db.cursor() as cur:
+        cur.execute("DELETE FROM articles WHERE id = %s RETURNING id", (article_id,))
+        deleted = cur.fetchone()
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Статья не найдена")
+        db.commit()
+    return {"status": "ok", "deleted_id": article_id}
+
 @app.get("/", response_class=HTMLResponse)
 def root():
     with open("index.html", encoding="utf-8") as f:
