@@ -500,6 +500,12 @@ def root():
     with open("index.html", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/admin", response_class=HTMLResponse)
+def admin_page():
+    with open("index.html", encoding="utf-8") as f:
+        content = f.read()
+    return content.replace("const ADMIN_MODE = false;", "const ADMIN_MODE = true;")
+
 @app.get("/library/{filename}")
 def download_pdf(filename: str):
     """Скачать PDF файл из папки library или через Google Drive прямую ссылку"""
