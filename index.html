@@ -447,6 +447,56 @@
   
 </style>
 </head>
+
+<!-- MODAL: ДОБАВИТЬ СТАТЬЮ -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
+  <div class="modal" id="add-modal-body" style="max-width:600px">
+    <button class="modal-close" onclick="document.getElementById('add-modal').classList.remove('open')">✕</button>
+    <div class="modal-title">Добавить публикацию</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:20px">
+      <div>
+        <div class="modal-label">Название *</div>
+        <input type="text" id="add-title" placeholder="Введите название статьи" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
+      </div>
+      <div>
+        <div class="modal-label">Авторы</div>
+        <input type="text" id="add-authors" placeholder="например: Иванов И.И.; Петров П.П." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
+      </div>
+      <div>
+        <div class="modal-label">Аннотация</div>
+        <textarea id="add-abstract" placeholder="Краткое описание статьи" rows="4" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none;resize:vertical"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div class="modal-label">Год</div>
+          <input type="number" id="add-year" placeholder="2024" min="1900" max="2100" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
+        </div>
+        <div>
+          <div class="modal-label">Язык</div>
+          <select id="add-lang" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="modal-label">Ключевые слова</div>
+        <input type="text" id="add-keywords" placeholder="например: SQL, базы данных, нормализация" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:0.9rem;outline:none">
+      </div>
+      <div style="display:flex;gap:20px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-size:0.875rem">
+          <input type="checkbox" id="add-vak" style="accent-color:var(--accent)"> Журнал ВАК
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-size:0.875rem">
+          <input type="checkbox" id="add-open" checked style="accent-color:var(--accent)"> Открытый доступ
+        </label>
+      </div>
+      <div id="add-error" style="color:var(--accent2);font-size:0.85rem;display:none"></div>
+      <button class="apply-btn" onclick="submitArticle()">Сохранить статью</button>
+    </div>
+  </div>
+</div>
+  
 <body>
 
 <!-- HEADER -->
@@ -781,6 +831,56 @@ function resetFilters() {
   ['f-quartile','f-lang','f-format','f-rating'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-year-from').value = '';
   document.getElementById('f-year-to').value = '';
+  function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+}
+function closeAddModal(event) {
+  if (event.target === document.getElementById('add-modal')) {
+    document.getElementById('add-modal').classList.remove('open');
+  }
+}
+
+async function submitArticle() {
+  const title = document.getElementById('add-title').value.trim();
+  const errorEl = document.getElementById('add-error');
+
+  if (!title) {
+    errorEl.textContent = 'Название обязательно для заполнения';
+    errorEl.style.display = 'block';
+    return;
+  }
+  errorEl.style.display = 'none';
+
+  const payload = {
+    title,
+    authors: document.getElementById('add-authors').value.trim(),
+    abstract: document.getElementById('add-abstract').value.trim(),
+    year: parseInt(document.getElementById('add-year').value) || null,
+    language: document.getElementById('add-lang').value,
+    keywords: document.getElementById('add-keywords').value.trim(),
+    is_vak: document.getElementById('add-vak').checked,
+    is_open_access: document.getElementById('add-open').checked,
+  };
+
+  try {
+    const res = await fetch(`${API}/articles/add`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Ошибка сервера');
+    document.getElementById('add-modal').classList.remove('open');
+    // Очищаем форму
+    ['add-title','add-authors','add-abstract','add-year','add-keywords'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('add-vak').checked = false;
+    document.getElementById('add-open').checked = true;
+    applyFilters();
+    alert('Статья успешно добавлена!');
+  } catch(e) {
+    errorEl.textContent = 'Ошибка при сохранении. Попробуйте снова.';
+    errorEl.style.display = 'block';
+  }
+}
   applyFilters();
 }
 
