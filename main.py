@@ -495,6 +495,122 @@ def delete_article(article_id: int, db=Depends(get_db)):
         db.commit()
     return {"status": "ok", "deleted_id": article_id}
 
+class ArticleUpdate(BaseModel):
+    title: Optional[str] = None
+    authors: Optional[str] = None
+    abstract: Optional[str] = None
+    year: Optional[int] = None
+    language: Optional[str] = None
+    keywords: Optional[str] = None
+    is_vak: Optional[bool] = None
+    is_scopus: Optional[bool] = None
+    is_open_access: Optional[bool] = None
+    has_formulas: Optional[bool] = None
+
+
+@app.put("/api/articles/{article_id}")
+def update_article(article_id: int, data: ArticleUpdate, db=Depends(get_db)):
+    """Обновление публикации — операция U (Update) в CRUD.
+
+    Обновляются только переданные поля. Выполняется проверка ограничений
+    (бизнес-правил) перед записью в БД.
+    """
+    with db.cursor() as cur:
+        cur.execute("SELECT id FROM articles WHERE id=%s", (article_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Статья не найдена")
+
+        # Проверка ограничений (бизнес-правила)
+        if not data.title and data.title is not None:
+            raise HTTPException(status_code=400, detail="Название не может быть пустым")
+        if data.year is not None and not (1900 <= data.year <= 2100):
+            raise HTTPException(status_code=400, detail="Год должен быть в диапазоне 1900–2100")
+        if data.language is not None and data.language not in ("ru", "en"):
+            raise HTTPException(status_code=400, detail="Язык должен быть 'ru' или 'en'")
+
+        # Динамически собираем UPDATE только из переданных полей
+        fields, params = [], []
+        for col in ("title", "abstract", "year", "language",
+                    "is_vak", "is_scopus", "is_open_access", "has_formulas"):
+            val = getattr(data, col)
+            if val is not None:
+                fields.append(f"{col} = %s")
+                params.append(val)
+        if fields:
+            params.append(article_id)
+            cur.execute(f"UPDATE articles SET {', '.join(fields)} WHERE id=%s", params)
+
+        # Обновляем авторов (связь M:N), если переданы
+        if data.authors is not None:
+            cur.execute("DELETE FROM article_authors WHERE article_id=%s", (article_id,))
+            for i, name in enumerate(data.authors.split(';')):
+                name = name.strip()
+                if not name:
+                    continue
+                cur.execute("SELECT id FROM authors WHERE full_name=%s LIMIT 1", (name,))
+                a = cur.fetchone()
+                author_id = a['id'] if a else None
+                if author_id is None:
+                    cur.execute("INSERT INTO authors (full_name, country_id) VALUES (%s, 1) RETURNING id", (name,))
+                    author_id = cur.fetchone()['id']
+                cur.execute("INSERT INTO article_authors (article_id, author_id, author_order) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING", (article_id, author_id, i + 1))
+
+        # Обновляем ключевые слова (связь M:N), если переданы
+        if data.keywords is not None:
+            cur.execute("DELETE FROM article_keywords WHERE article_id=%s", (article_id,))
+            for word in data.keywords.split(','):
+                word = word.strip().lower()
+                if not word:
+                    continue
+                cur.execute("SELECT id FROM keywords WHERE word=%s LIMIT 1", (word,))
+                k = cur.fetchone()
+                kw_id = k['id'] if k else None
+                if kw_id is None:
+                    cur.execute("INSERT INTO keywords (word) VALUES (%s) RETURNING id", (word,))
+                    kw_id = cur.fetchone()['id']
+                cur.execute("INSERT INTO article_keywords (article_id, keyword_id) VALUES (%s,%s) ON CONFLICT DO NOTHING", (article_id, kw_id))
+
+        db.commit()
+    return {"status": "ok", "id": article_id}
+
+
+# Запрос 4 — статьи с формулами в открытом доступе (отчёт)
+@app.get("/api/stats/formula_open")
+def stats_formula_open(db=Depends(get_db)):
+    sql = """
+        SELECT a.title, a.year, a.doi, a.file_format, a.language,
+               STRING_AGG(DISTINCT k.word, ', ') AS keywords
+        FROM articles a
+        LEFT JOIN article_keywords ak ON a.id = ak.article_id
+        LEFT JOIN keywords k          ON ak.keyword_id = k.id
+        WHERE a.has_formulas = TRUE AND a.is_open_access = TRUE
+        GROUP BY a.id, a.title, a.year, a.doi, a.file_format, a.language
+        ORDER BY a.year DESC
+    """
+    with db.cursor() as cur:
+        cur.execute(sql)
+        rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
+
+# Запрос 5 — полнотекстовый поиск с ранжированием (отчёт)
+@app.get("/api/stats/fts")
+def stats_fts(q: str = Query(..., description="Поисковый запрос"), db=Depends(get_db)):
+    sql = """
+        SELECT a.title, a.year,
+               ROUND(ts_rank(to_tsvector('russian', a.title || ' ' || COALESCE(a.abstract,'')),
+                       plainto_tsquery('russian', %s))::NUMERIC, 4) AS rank
+        FROM articles a
+        WHERE to_tsvector('russian', a.title || ' ' || COALESCE(a.abstract,''))
+              @@ plainto_tsquery('russian', %s)
+        ORDER BY rank DESC
+    """
+    with db.cursor() as cur:
+        cur.execute(sql, (q, q))
+        rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
+
 @app.get("/", response_class=HTMLResponse)
 def root():
     with open("index.html", encoding="utf-8") as f:

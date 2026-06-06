@@ -349,7 +349,7 @@
 
     <!-- Добавить статью -->
     <div class="admin-card">
-      <h3>➕ Добавить публикацию</h3>
+      <h3 id="add-card-title">➕ Добавить публикацию</h3>
       <div style="display:flex;flex-direction:column;gap:14px">
         <div>
           <div class="modal-label">Название *</div>
@@ -387,7 +387,10 @@
           <label><input type="checkbox" id="add-formulas"> Содержит формулы</label>
         </div>
         <div id="add-error" class="form-error"></div>
-        <button class="apply-btn" onclick="submitArticle()" style="max-width:200px">💾 Сохранить статью</button>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="apply-btn" id="save-btn" onclick="submitArticle()" style="max-width:220px">💾 Сохранить статью</button>
+          <button class="apply-btn secondary" id="cancel-edit-btn" onclick="cancelEdit()" style="max-width:170px;display:none">Отменить правку</button>
+        </div>
       </div>
     </div>
 
@@ -400,6 +403,16 @@
       <div class="admin-articles-list" id="admin-articles-list">
         <div style="color:var(--muted);font-size:0.875rem">Загрузка списка…</div>
       </div>
+    </div>
+
+    <!-- Отчёты / статистика -->
+    <div class="admin-card" id="reports-card">
+      <h3>📊 Отчёты и статистика</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="apply-btn" onclick="loadReports()" style="max-width:230px">🔄 Сформировать отчёты</button>
+        <button class="apply-btn secondary" onclick="window.print()" style="max-width:180px">🖨 На печать</button>
+      </div>
+      <div id="reports-content" style="color:var(--muted);font-size:0.875rem">Нажмите «Сформировать отчёты», чтобы загрузить статистику из базы данных.</div>
     </div>
 
   </div>
@@ -439,6 +452,7 @@ if (ADMIN_MODE) {
 const ADMIN_PASSWORD = 'admin2025';
 let isAdmin = false;
 let allAdminArticles = [];
+let editingId = null;  // id редактируемой статьи (null = режим добавления)
 
 const DEMO_ARTICLES = [
   { id: 1, title: 'Методы оптимизации запросов в реляционных СУБД', abstract: 'В статье рассматриваются алгоритмы оптимизации SQL-запросов с использованием индексов B-tree и Hash.', year: 2023, journal_name: 'Программная инженерия', is_vak: true, is_scopus: false, quartile: 'Q3', impact_factor: 0.89, file_format: 'pdf', language: 'ru', has_formulas: false, is_open_access: true, authors: 'Иванов Иван Иванович (д.т.н.); Петрова Анна Сергеевна (к.т.н.)', keywords: 'SQL, нормализация, индексирование', areas: 'Базы данных', doi: '10.1234/db.2023.001' },
@@ -511,6 +525,7 @@ function renderAdminList(articles) {
     <div class="admin-article-row">
       <div class="admin-article-title">${a.title}</div>
       <span class="admin-article-year">${a.year || '—'}</span>
+      <button class="btn-sm" onclick="startEdit(${a.id})">✏ Изменить</button>
       <button class="btn-sm danger" onclick="deleteArticle(${a.id}, this)">🗑 Удалить</button>
     </div>
   `).join('');
@@ -558,22 +573,92 @@ async function submitArticle() {
   };
 
   try {
-    const res = await fetch(`${API}/articles/add`, {
-      method: 'POST',
+    const url = editingId ? `${API}/articles/${editingId}` : `${API}/articles/add`;
+    const method = editingId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error();
-    ['add-title','add-authors','add-abstract','add-year','add-keywords'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('add-vak').checked = false;
-    document.getElementById('add-scopus').checked = false;
-    document.getElementById('add-open').checked = true;
-    document.getElementById('add-formulas').checked = false;
+    const wasEditing = editingId !== null;
+    cancelEdit();
     loadAdminArticles();
-    alert('✅ Статья успешно добавлена!');
+    alert(wasEditing ? '✅ Статья обновлена!' : '✅ Статья успешно добавлена!');
   } catch {
     errorEl.textContent = 'Ошибка при сохранении. Проверьте подключение к серверу.';
     errorEl.style.display = 'block';
+  }
+}
+
+// ── Редактирование статьи (операция U в CRUD) ─────────────
+async function startEdit(id) {
+  let article;
+  try {
+    const res = await fetch(`${API}/articles/${id}`);
+    article = await res.json();
+  } catch {
+    article = (allAdminArticles || []).find(a => a.id === id);
+  }
+  if (!article) { alert('Не удалось загрузить статью'); return; }
+  editingId = id;
+  document.getElementById('add-title').value = article.title || '';
+  document.getElementById('add-authors').value = article.authors || '';
+  document.getElementById('add-abstract').value = article.abstract || '';
+  document.getElementById('add-year').value = article.year || '';
+  document.getElementById('add-keywords').value = article.keywords || '';
+  document.getElementById('add-lang').value = article.language || 'ru';
+  document.getElementById('add-vak').checked = !!article.is_vak;
+  document.getElementById('add-scopus').checked = !!article.is_scopus;
+  document.getElementById('add-open').checked = !!article.is_open_access;
+  document.getElementById('add-formulas').checked = !!article.has_formulas;
+  document.getElementById('add-card-title').textContent = '✏ Редактирование публикации #' + id;
+  document.getElementById('save-btn').textContent = '💾 Сохранить изменения';
+  document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+  document.getElementById('add-error').style.display = 'none';
+  document.querySelector('.admin-content').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  editingId = null;
+  ['add-title','add-authors','add-abstract','add-year','add-keywords'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('add-lang').value = 'ru';
+  document.getElementById('add-vak').checked = false;
+  document.getElementById('add-scopus').checked = false;
+  document.getElementById('add-open').checked = true;
+  document.getElementById('add-formulas').checked = false;
+  document.getElementById('add-card-title').textContent = '➕ Добавить публикацию';
+  document.getElementById('save-btn').textContent = '💾 Сохранить статью';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+  document.getElementById('add-error').style.display = 'none';
+}
+
+// ── Отчёты / статистика (вывод на экран и печать) ─────────
+async function loadReports() {
+  const box = document.getElementById('reports-content');
+  box.innerHTML = '<div style="color:var(--muted)">Формирование отчётов…</div>';
+  const tbl = (title, headers, rows) => {
+    const head = headers.map(h => `<th style="text-align:left;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.15)">${h}</th>`).join('');
+    const body = rows.length
+      ? rows.map(r => `<tr>${r.map(c => `<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.06)">${(c===null||c===undefined)?'—':c}</td>`).join('')}</tr>`).join('')
+      : `<tr><td colspan="${headers.length}" style="padding:8px 10px;color:var(--muted)">Нет данных</td></tr>`;
+    return `<h4 style="margin:18px 0 8px">${title}</h4><table style="width:100%;border-collapse:collapse;font-size:.85rem"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+  };
+  try {
+    const [areas, authors, formula] = await Promise.all([
+      fetch(`${API}/stats/areas`).then(r => r.json()),
+      fetch(`${API}/stats/top_authors`).then(r => r.json()),
+      fetch(`${API}/stats/formula_open`).then(r => r.json()),
+    ]);
+    box.innerHTML =
+      tbl('Отчёт 1. Публикации по предметным областям', ['Область', 'Кол-во', 'Средний IF'],
+          areas.map(a => [a.area, a.total, a.avg_impact_factor])) +
+      tbl('Отчёт 2. Топ авторов по публикациям в Scopus', ['Автор', 'h-index', 'Рейтинг', 'Публ.', 'Организация'],
+          authors.map(a => [a.full_name, a.h_index, a.rating, a.scopus_pubs, a.organization])) +
+      tbl('Отчёт 3. Статьи с формулами в открытом доступе', ['Название', 'Год', 'Формат', 'Язык', 'Ключевые слова'],
+          formula.map(a => [a.title, a.year, a.file_format, a.language, a.keywords]));
+  } catch {
+    box.innerHTML = '<div style="color:var(--accent2)">Не удалось загрузить отчёты. Проверьте подключение к серверу и наличие данных в БД.</div>';
   }
 }
 
